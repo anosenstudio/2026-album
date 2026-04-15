@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>졸업앨범 관리자 — QR 일괄 생성</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a96e;--gold-dim:#8a6f3f;
+  --bg:#0f0e0d;--bg-card:#1a1814;--bg-input:#0d0c0b;
+  --border:#2a2720;--text:#f0ece4;--muted:#8a7f6e;--faint:#3a3428;
+  --green:#6ec98a;--green-bg:#131e17;--green-border:#1e3d28;
+  --red:#c96e6e;--red-bg:#1e1413;--red-border:#3d2020;
+}
+body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);padding:2.5rem 1.5rem}
+.page{max-width:880px;margin:0 auto}
+header{margin-bottom:2.5rem}
+.head-label{font-size:11px;letter-spacing:4px;color:var(--muted);margin-bottom:.75rem}
+h1{font-family:'Noto Serif KR',serif;font-size:26px;font-weight:600;margin-bottom:.4rem}
+.head-sub{font-size:13px;color:var(--muted);font-weight:300}
+.divider{width:32px;height:1px;background:var(--faint);margin:2rem 0}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:1.25rem}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.field:last-of-type{margin-bottom:0}
+.lbl{font-size:11px;letter-spacing:2px;color:var(--muted)}
+input,select{width:100%;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--gold-dim)}
+input::placeholder{color:var(--faint)}
+select option{background:#1a1814}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem}
+.btn{padding:10px 20px;border-radius:10px;border:1px solid var(--border);font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:500;transition:background .15s,border-color .15s,transform .1s;background:transparent;color:var(--text);white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-primary{background:#231f16;border-color:var(--gold-dim);color:var(--gold)}
+.btn-primary:hover:not(:disabled){background:#2a2415;border-color:var(--gold)}
+.btn-ghost:hover:not(:disabled){background:#1e1c18}
+.alert{border-radius:10px;padding:.875rem 1.25rem;font-size:13px;line-height:1.8;margin-top:1rem;display:none}
+.alert.err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.alert.ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--faint);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 학생 그리드 */
+.stats{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:.875rem 1.25rem;min-width:120px}
+.stat-val{font-size:24px;font-weight:500;margin-bottom:2px}
+.stat-lbl{font-size:11px;color:var(--muted)}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.qr-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center;transition:border-color .2s}
+.qr-card:hover{border-color:var(--gold-dim)}
+.qr-box{background:#fff;border-radius:8px;padding:8px;display:inline-block;margin-bottom:.875rem}
+.qr-box canvas,.qr-box img{display:block}
+.qr-name{font-size:14px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qr-cls{font-size:11px;color:var(--muted)}
+.empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px;grid-column:1/-1}
+footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text-align:center}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="head-label">ADMIN</div>
+    <h1>졸업앨범 QR 일괄 생성</h1>
+    <p class="head-sub">학교별로 학생 목록을 불러와 QR코드를 일괄 다운로드합니다</p>
+  </header>
+  <div class="divider"></div>
+
+  <!-- 설정 -->
+  <div class="card">
+    <div class="card-title">SETTINGS</div>
+    <div class="field">
+      <span class="lbl">Google Apps Script 웹앱 URL</span>
+      <input id="gasUrl" type="text" placeholder="https://script.google.com/macros/s/…/exec" />
+    </div>
+    <div class="field">
+      <span class="lbl">GitHub Pages 기본 URL</span>
+      <input id="pagesUrl" type="text" placeholder="https://anosenstudio.github.io/2025-album" />
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="loadSchools()">학교 목록 불러오기</button>
+      <button class="btn btn-ghost"   onclick="saveSettings()">설정 저장</button>
+    </div>
+    <div class="alert err" id="settingsErr"></div>
+  </div>
+
+  <!-- 학교 선택 -->
+  <div class="card">
+    <div class="card-title">학교 선택</div>
+    <div class="field">
+      <select id="schoolSelect" onchange="loadStudents()">
+        <option value="">-- 먼저 학교 목록을 불러오세요 --</option>
+      </select>
+    </div>
+    <div id="loadingStudents" style="display:none;margin-top:.75rem;font-size:13px;color:var(--muted)">
+      <span class="spin"></span>불러오는 중…
+    </div>
+  </div>
+
+  <!-- 통계 + QR 그리드 -->
+  <div id="resultSection" style="display:none">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="statCount">0</div>
+        <div class="stat-lbl">녹음 완료</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="statSchool">—</div>
+        <div class="stat-lbl">학교</div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:1.25rem">
+      <button class="btn btn-primary" id="dlBtn" onclick="downloadZip()">QR 전체 ZIP 다운로드</button>
+      <button class="btn btn-ghost"   onclick="loadStudents()">새로고침</button>
+    </div>
+
+    <div class="qr-grid" id="qrGrid">
+      <div class="empty">학교를 선택하면 학생 목록이 표시됩니다</div>
+    </div>
+  </div>
+
+  <footer>졸업앨범 음성 QR 관리 시스템</footer>
+</div>
+
+<script>
+  let students = [];
+
+  // 설정 불러오기 (localStorage)
+  window.onload = () => {
+    document.getElementById('gasUrl').value   = localStorage.getItem('gasUrl')   || '';
+    document.getElementById('pagesUrl').value = localStorage.getItem('pagesUrl') || '';
+  };
+
+  function saveSettings() {
+    localStorage.setItem('gasUrl',   document.getElementById('gasUrl').value.trim());
+    localStorage.setItem('pagesUrl', document.getElementById('pagesUrl').value.trim());
+    alert('설정이 저장됐습니다.');
+  }
+
+  function getGasUrl()   { return document.getElementById('gasUrl').value.trim(); }
+  function getPagesUrl() { return document.getElementById('pagesUrl').value.trim().replace(/\/$/, ''); }
+
+  async function loadSchools() {
+    const url = getGasUrl();
+    if (!url) return showErr('settingsErr', 'GAS URL을 입력하세요.');
+    try {
+      const res  = await fetch(url + '?action=schools');
+      const data = await res.json();
+      const sel  = document.getElementById('schoolSelect');
+      sel.innerHTML = '<option value="">-- 학교를 선택하세요 --</option>' +
+        data.schools.map(s => `<option value="${s}">${s}</option>`).join('');
+      document.getElementById('settingsErr').style.display = 'none';
+    } catch {
+      showErr('settingsErr', '학교 목록을 불러올 수 없습니다. GAS URL을 확인하세요.');
+    }
+  }
+
+  async function loadStudents() {
+    const school = document.getElementById('schoolSelect').value;
+    if (!school) return;
+    document.getElementById('loadingStudents').style.display = 'block';
+    document.getElementById('resultSection').style.display   = 'none';
+    try {
+      const res  = await fetch(getGasUrl() + '?action=list&school=' + encodeURIComponent(school));
+      const data = await res.json();
+      students = data.students || [];
+      document.getElementById('loadingStudents').style.display = 'none';
+      document.getElementById('resultSection').style.display   = 'block';
+      document.getElementById('statCount').textContent  = students.length;
+      document.getElementById('statSchool').textContent = school;
+      renderGrid();
+    } catch {
+      document.getElementById('loadingStudents').style.display = 'none';
+      alert('학생 목록을 불러오는 데 실패했습니다.');
+    }
+  }
+
+  function makeUrl(s) {
+    const base = getPagesUrl();
+    return base + '/play.html?student=' + encodeURIComponent(s.name) +
+           '&class=' + encodeURIComponent(s.className) +
+           '&fileId=' + encodeURIComponent(s.fileId);
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('qrGrid');
+    if (!students.length) {
+      grid.innerHTML = '<div class="empty">녹음된 학생이 없습니다</div>';
+      return;
+    }
+    grid.innerHTML = students.map((s, i) => `
+      <div class="qr-card">
+        <div class="qr-box" id="qr-box-${i}"></div>
+        <div class="qr-name">${s.name}</div>
+        <div class="qr-cls">${s.className}</div>
+      </div>
+    `).join('');
+
+    // QR 생성
+    students.forEach((s, i) => {
+      new QRCode(document.getElementById('qr-box-' + i), {
+        text:          makeUrl(s),
+        width:         160,
+        height:        160,
+        colorDark:     '#000000',
+        colorLight:    '#ffffff',
+        correctLevel:  QRCode.CorrectLevel.M
+      });
+    });
+  }
+
+  async function downloadZip() {
+    if (!students.length) return alert('학생 데이터가 없습니다.');
+    const btn = document.getElementById('dlBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>ZIP 생성 중…';
+
+    const zip = new JSZip();
+    const school = document.getElementById('schoolSelect').value;
+
+    // 각 QR 카드의 캔버스를 PNG로 변환하여 ZIP에 추가
+    const tasks = students.map((s, i) => new Promise(resolve => {
+      // QRCode.js 는 내부에 canvas 를 생성함
+      const box    = document.getElementById('qr-box-' + i);
+      const canvas = box.querySelector('canvas');
+      if (!canvas) return resolve();
+      canvas.toBlob(blob => {
+        const filename = s.name + '_' + s.className + '.png';
+        zip.file(filename, blob);
+        resolve();
+      }, 'image/png');
+    }));
+
+    await Promise.all(tasks);
+
+    // 학생 목록 CSV도 함께 포함
+    const csvRows = [['이름','학반','파일ID','QR URL']];
+    students.forEach(s => csvRows.push([s.name, s.className, s.fileId, makeUrl(s)]));
+    const csvContent = '\uFEFF' + csvRows.map(r => r.join(',')).join('\n'); // BOM for Excel
+    zip.file('학생목록.csv', csvContent);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    saveAs(zipBlob, school + '_QR코드.zip');
+
+    btn.disabled = false;
+    btn.textContent = 'QR 전체 ZIP 다운로드';
+  }
+
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+</script>
+</body>
+</html>
