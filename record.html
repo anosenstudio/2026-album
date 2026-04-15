@@ -27,7 +27,14 @@ h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:600;text-align:c
 input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;margin-bottom:1.25rem}
 input:focus{border-color:var(--gold-dim)}
 input::placeholder{color:var(--faint)}
-input:last-of-type{margin-bottom:0}
+
+/* 학반 드롭다운 행 */
+.class-row{display:flex;align-items:center;gap:8px}
+.grade-badge{padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0}
+select{flex:1;padding:10px 8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;appearance:none;-webkit-appearance:none;text-align:center;cursor:pointer}
+select:focus{border-color:var(--gold-dim)}
+select option{background:#1a1814}
+
 .timer{text-align:center;font-size:36px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:.4rem;transition:color .3s}
 .timer.rec{color:var(--red)}
 .status{text-align:center;font-size:13px;color:var(--muted);min-height:20px;margin-bottom:1.5rem}
@@ -41,17 +48,19 @@ input:last-of-type{margin-bottom:0}
 .rec-btn:active{transform:scale(.95)}
 .rec-btn.recording{background:var(--red-bg);border-color:var(--red-border);animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,110,110,.25)}50%{box-shadow:0 0 0 10px rgba(201,110,110,0)}}
-audio{width:100%;border-radius:8px;accent-color:var(--gold);margin-bottom:1rem;display:none}
-.btns{display:flex;gap:8px}
+
+.btn-row{display:flex;gap:8px;margin-bottom:8px}
 .btn{flex:1;padding:11px 0;border-radius:10px;border:1px solid var(--border);font-size:14px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:500;transition:background .15s,border-color .15s,transform .1s;background:transparent;color:var(--text)}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-listen{color:var(--green);border-color:#1e3d28;background:var(--green-bg)}
+.btn-listen:hover:not(:disabled){background:#192b1f}
+.btn-listen.on{border-color:var(--green)}
 .btn-retry:hover:not(:disabled){background:#1e1c18}
 .btn-save{background:#231f16;border-color:var(--gold-dim);color:var(--gold)}
 .btn-save:hover:not(:disabled){background:#2a2415;border-color:var(--gold)}
 .alert{border-radius:10px;padding:1rem 1.25rem;font-size:13px;line-height:1.8;margin-top:1rem;display:none;text-align:center}
 .alert.err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
-.alert.ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
 .alert.load{background:#161513;border:1px solid var(--border);color:var(--muted)}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--faint);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -59,19 +68,12 @@ audio{width:100%;border-radius:8px;accent-color:var(--gold);margin-bottom:1rem;d
 .done .icon{font-size:56px;margin-bottom:1rem;display:block}
 .done .title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:600;margin-bottom:.75rem}
 .done .msg{font-size:13px;color:var(--muted);line-height:2}
-.btn-more{margin-top:2rem;padding:10px 24px;border:1px solid var(--border);border-radius:99px;font-size:13px;color:var(--muted);background:transparent;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:border-color .2s,color .2s}
-.btn-more:hover{border-color:var(--gold-dim);color:var(--gold)}
 footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;margin-top:2rem}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!--
-  ✏️ GAS_URL 을 배포한 Google Apps Script 웹 앱 URL로 교체하세요
-     URL 파라미터 ?school=학교명 을 붙여서 링크 공유하면
-     학교 이름 입력 없이 자동 설정됩니다.
-  -->
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
     const params  = new URLSearchParams(location.search);
@@ -84,17 +86,34 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
   <div class="divider"></div>
 
   <div id="form">
-    <!-- 학교명 입력 (URL 파라미터 없을 때만 표시) -->
     <div class="card" id="schoolCard" style="display:none">
       <label class="lbl">학교 이름</label>
-      <input id="inputSchool" type="text" placeholder="예: ○○초등학교" />
+      <input id="inputSchool" type="text" placeholder="예: ○○초등학교" style="margin-bottom:0" />
     </div>
 
     <div class="card">
       <label class="lbl">이름</label>
       <input id="inputName" type="text" placeholder="예: 홍길동" />
       <label class="lbl">학반 및 번호</label>
-      <input id="inputClass" type="text" placeholder="예: 6학년 3반 15번" />
+      <div class="class-row">
+        <span class="grade-badge">6학년</span>
+        <select id="selectBan">
+          <option value="">반 ▾</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+        </select>
+        <select id="selectNum">
+          <option value="">번호 ▾</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+          <option>16</option><option>17</option><option>18</option><option>19</option><option>20</option>
+          <option>21</option><option>22</option><option>23</option><option>24</option><option>25</option>
+          <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
+          <option>31</option><option>32</option><option>33</option><option>34</option><option>35</option>
+        </select>
+      </div>
     </div>
 
     <div class="card">
@@ -121,12 +140,20 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
         <div class="bar" style="animation-delay:.00s"></div>
       </div>
 
+      <!-- 숨겨진 오디오 — 다시 듣기 버튼으로 제어 -->
       <audio id="preview"
-        onplay="wave.className='waveform playing'"
-        onpause="wave.className='waveform'"
-        onended="wave.className='waveform'"></audio>
+        onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on')"
+        onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')"
+        onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')">
+      </audio>
 
-      <div class="btns">
+      <!-- 다시 듣기 -->
+      <div class="btn-row">
+        <button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button>
+      </div>
+
+      <!-- 다시 녹음 + 저장 -->
+      <div class="btn-row">
         <button class="btn btn-retry" id="retryBtn" disabled onclick="retry()">다시 녹음</button>
         <button class="btn btn-save"  id="saveBtn"  disabled onclick="save()">저장하기 →</button>
       </div>
@@ -145,14 +172,12 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       졸업앨범 QR코드를 스캔하면<br>
       이 목소리를 들을 수 있답니다 🎓
     </div>
-    <button class="btn-more" onclick="reset()">다른 학생 녹음하기</button>
   </div>
 
   <footer id="footer"></footer>
 </div>
 
 <script>
-  // 학교명 초기화
   const schoolLabel = document.getElementById('schoolLabel');
   const schoolCard  = document.getElementById('schoolCard');
   if (SCHOOL) {
@@ -177,6 +202,13 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
     $('timer').textContent = pad(Math.floor(secs/60))+':'+pad(secs%60);
   }
 
+  function getClassName() {
+    const ban = $('selectBan').value;
+    const num = $('selectNum').value;
+    if (!ban || !num) return '';
+    return '6학년 ' + ban + '반 ' + num + '번';
+  }
+
   async function toggleRecord() {
     if (!isRec) {
       try {
@@ -187,23 +219,23 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
         recorder.onstop = () => {
           blob = new Blob(chunks, { type: mimeType });
           $('preview').src = URL.createObjectURL(blob);
-          $('preview').style.display = 'block';
-          $('retryBtn').disabled = false;
-          $('saveBtn').disabled  = false;
+          $('listenBtn').disabled = false;
+          $('retryBtn').disabled  = false;
+          $('saveBtn').disabled   = false;
           stream.getTracks().forEach(t => t.stop());
           setStatus('녹음 완료 — 들어보고 마음에 들면 저장하세요');
         };
         recorder.start(100);
         isRec = true; secs = 0;
-        $('timer').textContent = '00:00';
-        $('timer').className = 'timer rec';
+        $('timer').textContent  = '00:00';
+        $('timer').className    = 'timer rec';
         timerInterval = setInterval(tick, 1000);
-        $('recBtn').className = 'rec-btn recording';
+        $('recBtn').className   = 'rec-btn recording';
         $('recBtn').textContent = '⏹';
-        $('wave').className = 'waveform recording';
-        $('preview').style.display = 'none';
-        $('retryBtn').disabled = true;
-        $('saveBtn').disabled  = true;
+        $('wave').className     = 'waveform recording';
+        $('listenBtn').disabled = true;
+        $('retryBtn').disabled  = true;
+        $('saveBtn').disabled   = true;
         clearAlerts();
         setStatus('녹음 중… 다시 누르면 정지됩니다');
       } catch {
@@ -218,19 +250,33 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
     if (!isRec) return;
     recorder.stop(); isRec = false;
     clearInterval(timerInterval);
-    $('recBtn').className = 'rec-btn';
+    $('recBtn').className   = 'rec-btn';
     $('recBtn').textContent = '⏺';
-    $('timer').className = 'timer';
-    $('wave').className = 'waveform';
+    $('timer').className    = 'timer';
+    $('wave').className     = 'waveform';
+  }
+
+  function toggleListen() {
+    const audio = $('preview');
+    if (audio.paused) {
+      audio.play();
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
   }
 
   function retry() {
     blob = null;
-    $('preview').style.display = 'none';
-    $('preview').src = '';
-    $('retryBtn').disabled = true;
-    $('saveBtn').disabled  = true;
-    $('timer').textContent = '00:00';
+    $('preview').pause();
+    $('preview').src        = '';
+    $('listenBtn').disabled = true;
+    $('listenBtn').textContent = '다시 듣기 ▶';
+    $('listenBtn').classList.remove('on');
+    $('retryBtn').disabled  = true;
+    $('saveBtn').disabled   = true;
+    $('timer').textContent  = '00:00';
+    $('wave').className     = 'waveform';
     clearAlerts();
     setStatus('버튼을 눌러 다시 녹음하세요');
   }
@@ -238,16 +284,18 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
   async function save() {
     const school    = SCHOOL || $('inputSchool').value.trim();
     const name      = $('inputName').value.trim();
-    const className = $('inputClass').value.trim();
+    const className = getClassName();
     if (!school)    return showErr('학교 이름을 입력해 주세요.');
     if (!name)      return showErr('이름을 입력해 주세요.');
-    if (!className) return showErr('학반 정보를 입력해 주세요.');
+    if (!className) return showErr('반과 번호를 선택해 주세요.');
     if (!blob)      return showErr('먼저 녹음을 완료해 주세요.');
 
+    $('preview').pause();
     clearAlerts();
     $('alertLoad').style.display = 'block';
-    $('saveBtn').disabled  = true;
-    $('retryBtn').disabled = true;
+    $('listenBtn').disabled = true;
+    $('saveBtn').disabled   = true;
+    $('retryBtn').disabled  = true;
 
     try {
       const base64 = await toBase64(blob);
@@ -260,16 +308,17 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       const data = await res.json();
       $('alertLoad').style.display = 'none';
       if (data.success) {
-        $('form').style.display = 'none';
+        $('form').style.display    = 'none';
         $('doneTitle').textContent = name + '님의 목소리가 저장됐어요!';
-        $('done').style.display = 'block';
+        $('done').style.display    = 'block';
       } else {
         throw new Error(data.error || '업로드 실패');
       }
     } catch (err) {
       $('alertLoad').style.display = 'none';
-      $('saveBtn').disabled  = false;
-      $('retryBtn').disabled = false;
+      $('listenBtn').disabled = false;
+      $('saveBtn').disabled   = false;
+      $('retryBtn').disabled  = false;
       showErr('저장 중 오류가 발생했어요.<br>' + err.message + '<br>잠시 후 다시 시도해 주세요.');
     }
   }
@@ -281,22 +330,6 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       r.onerror = rej;
       r.readAsDataURL(b);
     });
-  }
-
-  function reset() {
-    blob = null; secs = 0;
-    ['inputName','inputClass'].forEach(id => $(id) && ($(id).value = ''));
-    if ($('inputSchool')) $('inputSchool').value = '';
-    $('timer').textContent = '00:00';
-    $('preview').style.display = 'none';
-    $('preview').src = '';
-    $('retryBtn').disabled = true;
-    $('saveBtn').disabled  = true;
-    $('wave').className = 'waveform';
-    clearAlerts();
-    setStatus('버튼을 눌러 녹음을 시작하세요');
-    $('done').style.display = 'none';
-    $('form').style.display = 'block';
   }
 
   function setStatus(msg) { $('status').textContent = msg; }
