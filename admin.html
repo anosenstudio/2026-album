@@ -49,13 +49,12 @@ select option{background:#1a1814}
 .stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:.875rem 1.25rem;min-width:120px}
 .stat-val{font-size:24px;font-weight:500;margin-bottom:2px}
 .stat-lbl{font-size:11px;color:var(--muted)}
-.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px}
 .qr-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center;transition:border-color .2s}
 .qr-card:hover{border-color:var(--gold-dim)}
 .qr-box{background:#fff;border-radius:8px;padding:8px;display:inline-block;margin-bottom:.875rem}
 .qr-name{font-size:14px;font-weight:500;margin-bottom:3px}
 .qr-cls{font-size:11px;color:var(--muted)}
-.qr-id{font-size:10px;color:var(--faint);margin-top:4px;font-family:monospace}
 .empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px;grid-column:1/-1}
 footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text-align:center}
 </style>
@@ -172,9 +171,12 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
     }
   }
 
-  // QR URL: 행번호(id) + fileId(f) 포함 → 두 가지 방법으로 오디오 시도 가능
+  // QR URL: fileId + 이름 + 학반 직접 포함 → play.html이 GAS 없이 바로 재생
   function makeUrl(s) {
-    return getPagesUrl() + '/play.html?id=' + s.rowIndex + '&f=' + s.fileId;
+    return getPagesUrl() + '/play.html'
+      + '?f=' + encodeURIComponent(s.fileId)
+      + '&n=' + encodeURIComponent(s.name)
+      + '&c=' + encodeURIComponent(s.className);
   }
 
   function renderGrid(school) {
@@ -188,7 +190,6 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
         <div class="qr-box" id="qr-box-${i}"></div>
         <div class="qr-name">${s.name}</div>
         <div class="qr-cls">${s.className}</div>
-        <div class="qr-id">ID: ${s.rowIndex}</div>
       </div>
     `).join('');
 
@@ -224,8 +225,8 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
 
     await Promise.all(tasks);
 
-    const csvRows = [['학교','이름','학반','ID','fileId','QR URL']];
-    students.forEach(s => csvRows.push([school, s.name, s.className, s.rowIndex, s.fileId, makeUrl(s)]));
+    const csvRows = [['학교','이름','학반','QR URL']];
+    students.forEach(s => csvRows.push([school, s.name, s.className, makeUrl(s)]));
     zip.file('학생목록.csv', '\uFEFF' + csvRows.map(r => r.join(',')).join('\n'));
 
     const blob = await zip.generateAsync({ type: 'blob' });
