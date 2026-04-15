@@ -172,9 +172,9 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
     }
   }
 
-  // rowIndex 를 ID로 사용 → 짧고 단순한 QR
+  // QR URL: 행번호(id) + fileId(f) 포함 → 두 가지 방법으로 오디오 시도 가능
   function makeUrl(s) {
-    return getPagesUrl() + '/play.html?id=' + s.rowIndex;
+    return getPagesUrl() + '/play.html?id=' + s.rowIndex + '&f=' + s.fileId;
   }
 
   function renderGrid(school) {
@@ -192,7 +192,6 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
       </div>
     `).join('');
 
-    // CorrectLevel.L = 가장 단순한 QR 패턴
     students.forEach((s, i) => {
       new QRCode(document.getElementById('qr-box-' + i), {
         text:         makeUrl(s),
@@ -218,7 +217,6 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
       const canvas = box && box.querySelector('canvas');
       if (!canvas) return resolve();
       canvas.toBlob(blob => {
-        // 파일명: 학교명_이름_학반.png
         zip.file(school + '_' + s.name + '_' + s.className + '.png', blob);
         resolve();
       }, 'image/png');
@@ -226,9 +224,8 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
 
     await Promise.all(tasks);
 
-    // CSV 포함
-    const csvRows = [['학교','이름','학반','ID','QR URL']];
-    students.forEach(s => csvRows.push([school, s.name, s.className, s.rowIndex, makeUrl(s)]));
+    const csvRows = [['학교','이름','학반','ID','fileId','QR URL']];
+    students.forEach(s => csvRows.push([school, s.name, s.className, s.rowIndex, s.fileId, makeUrl(s)]));
     zip.file('학생목록.csv', '\uFEFF' + csvRows.map(r => r.join(',')).join('\n'));
 
     const blob = await zip.generateAsync({ type: 'blob' });
