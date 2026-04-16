@@ -56,7 +56,6 @@ body{
 .deco-line i{font-style:normal;font-size:14px;color:var(--gold-light)}
 
 .school-badge{text-align:center;font-size:11px;letter-spacing:3px;color:var(--muted);margin-bottom:1.25rem;font-weight:300}
-h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:2rem;color:var(--text)}
 
 .card{
   background:var(--bg-card);border:1px solid var(--border-light);
@@ -147,6 +146,13 @@ select option{background:var(--bg-card)}
 .alert.load{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}
 .spin{display:inline-block;width:12px;height:12px;border:1.5px solid var(--faint);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
 
+/* ── 녹음 폼 전체 래퍼 ── */
+#formWrap{width:100%}
+
+/* ── 폼 헤더 (완료 시 숨김) ── */
+.form-header{text-align:center;margin-bottom:1.75rem}
+.form-header h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;color:var(--text)}
+
 /* ── 완료 화면 ── */
 .done{display:none;text-align:center;padding:1.5rem 0;animation:fadeIn .6s ease both}
 .done .icon{font-size:58px;margin-bottom:1.25rem;display:block;animation:bloom .6s cubic-bezier(.22,1,.36,1) both}
@@ -164,7 +170,6 @@ footer{
 </head>
 <body>
 <div class="wrap">
-
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
     const MAX_SEC = 40;
@@ -174,90 +179,94 @@ footer{
 
   <div class="deco-line"><span></span><i>✦</i><span></span></div>
   <div class="school-badge" id="schoolLabel"></div>
-  <h1>졸업 음성 메시지 녹음</h1>
 
-  <div id="form">
-
-    <div class="card" id="schoolCard" style="display:none">
-      <label class="lbl">학교 이름</label>
-      <input id="inputSchool" type="text" placeholder="예: ○○초등학교" style="margin-bottom:0" />
+  <!-- ══ 녹음 폼 ══ -->
+  <div id="formWrap">
+    <div class="form-header">
+      <h1>졸업 음성 메시지 녹음</h1>
     </div>
 
-    <div class="card">
-      <label class="lbl">이름</label>
-      <input id="inputName" type="text" placeholder="예: 홍길동" />
-      <label class="lbl">학반 및 번호</label>
-      <div class="class-row">
-        <span class="grade-badge">6학년</span>
-        <select id="selectBan">
-          <option value="">반 ▾</option>
-          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-          <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
-        </select>
-        <select id="selectNum">
-          <option value="">번호 ▾</option>
-          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-          <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
-          <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
-          <option>16</option><option>17</option><option>18</option><option>19</option><option>20</option>
-          <option>21</option><option>22</option><option>23</option><option>24</option><option>25</option>
-          <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
-          <option>31</option><option>32</option><option>33</option><option>34</option><option>35</option>
-        </select>
+    <div id="form">
+      <div class="card" id="schoolCard" style="display:none">
+        <label class="lbl">학교 이름</label>
+        <input id="inputSchool" type="text" placeholder="예: ○○초등학교" style="margin-bottom:0" />
+      </div>
+
+      <div class="card">
+        <label class="lbl">이름</label>
+        <input id="inputName" type="text" placeholder="예: 홍길동" />
+        <label class="lbl">학반 및 번호</label>
+        <div class="class-row">
+          <span class="grade-badge">6학년</span>
+          <select id="selectBan">
+            <option value="">반 ▾</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+          </select>
+          <select id="selectNum">
+            <option value="">번호 ▾</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
+            <option>16</option><option>17</option><option>18</option><option>19</option><option>20</option>
+            <option>21</option><option>22</option><option>23</option><option>24</option><option>25</option>
+            <option>26</option><option>27</option><option>28</option><option>29</option><option>30</option>
+            <option>31</option><option>32</option><option>33</option><option>34</option><option>35</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="timer" id="timer">00:00</div>
+        <div class="rec-progress"><div class="rec-progress-bar" id="recBar"></div></div>
+        <div class="time-info">
+          <span id="elapsedLbl">0초</span>
+          <span class="time-remaining" id="remainLbl">40초 남음</span>
+        </div>
+        <div class="status" id="status">버튼을 눌러 녹음을 시작하세요</div>
+
+        <button class="rec-btn" id="recBtn" onclick="toggleRecord()">⏺</button>
+
+        <div class="waveform" id="wave">
+          <div class="bar" style="animation-delay:.00s"></div>
+          <div class="bar" style="animation-delay:.07s"></div>
+          <div class="bar" style="animation-delay:.14s"></div>
+          <div class="bar" style="animation-delay:.21s"></div>
+          <div class="bar" style="animation-delay:.28s"></div>
+          <div class="bar" style="animation-delay:.35s"></div>
+          <div class="bar" style="animation-delay:.42s"></div>
+          <div class="bar" style="animation-delay:.49s"></div>
+          <div class="bar" style="animation-delay:.42s"></div>
+          <div class="bar" style="animation-delay:.35s"></div>
+          <div class="bar" style="animation-delay:.28s"></div>
+          <div class="bar" style="animation-delay:.21s"></div>
+          <div class="bar" style="animation-delay:.14s"></div>
+          <div class="bar" style="animation-delay:.07s"></div>
+          <div class="bar" style="animation-delay:.00s"></div>
+        </div>
+
+        <audio id="preview"
+          onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on')"
+          onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')"
+          onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')">
+        </audio>
+
+        <div class="btn-row">
+          <button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-retry" id="retryBtn" disabled onclick="retry()">다시 녹음</button>
+          <button class="btn btn-save"  id="saveBtn"  disabled onclick="save()">저장하기 →</button>
+        </div>
+
+        <div class="alert err"  id="alertErr"></div>
+        <div class="alert load" id="alertLoad"><span class="spin"></span>저장 중입니다…</div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="timer" id="timer">00:00</div>
-      <div class="rec-progress"><div class="rec-progress-bar" id="recBar"></div></div>
-      <div class="time-info">
-        <span id="elapsedLbl">0초</span>
-        <span class="time-remaining" id="remainLbl">40초 남음</span>
-      </div>
-      <div class="status" id="status">버튼을 눌러 녹음을 시작하세요</div>
-
-      <button class="rec-btn" id="recBtn" onclick="toggleRecord()">⏺</button>
-
-      <div class="waveform" id="wave">
-        <div class="bar" style="animation-delay:.00s"></div>
-        <div class="bar" style="animation-delay:.07s"></div>
-        <div class="bar" style="animation-delay:.14s"></div>
-        <div class="bar" style="animation-delay:.21s"></div>
-        <div class="bar" style="animation-delay:.28s"></div>
-        <div class="bar" style="animation-delay:.35s"></div>
-        <div class="bar" style="animation-delay:.42s"></div>
-        <div class="bar" style="animation-delay:.49s"></div>
-        <div class="bar" style="animation-delay:.42s"></div>
-        <div class="bar" style="animation-delay:.35s"></div>
-        <div class="bar" style="animation-delay:.28s"></div>
-        <div class="bar" style="animation-delay:.21s"></div>
-        <div class="bar" style="animation-delay:.14s"></div>
-        <div class="bar" style="animation-delay:.07s"></div>
-        <div class="bar" style="animation-delay:.00s"></div>
-      </div>
-
-      <audio id="preview"
-        onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on')"
-        onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')"
-        onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')">
-      </audio>
-
-      <div class="btn-row">
-        <button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-retry" id="retryBtn" disabled onclick="retry()">다시 녹음</button>
-        <button class="btn btn-save"  id="saveBtn"  disabled onclick="save()">저장하기 →</button>
-      </div>
-
-      <div class="alert err"  id="alertErr"></div>
-      <div class="alert load" id="alertLoad"><span class="spin"></span>저장 중입니다…</div>
-    </div>
-
   </div>
 
-  <!-- 완료 화면 -->
+  <!-- ══ 완료 화면 (폼과 완전히 분리) ══ -->
   <div class="done" id="done">
     <span class="icon">🎉</span>
     <div class="title" id="doneTitle"></div>
@@ -269,7 +278,7 @@ footer{
     </div>
   </div>
 
-  <footer>소중한 순간은 늘 여기에, 늘스튜디오.</footer>
+  <footer>소중한 순간은 늘 여기에 ㅣ 늘스튜디오</footer>
 </div>
 
 <script>
@@ -430,9 +439,10 @@ footer{
       const data = await res.json();
       $('alertLoad').style.display = 'none';
       if (data.success) {
-        $('form').style.display    = 'none';
-        $('doneTitle').textContent = name + '님의 목소리가 저장됐어요!';
-        $('done').style.display    = 'block';
+        // 폼 전체 숨기고 완료 화면만 표시
+        $('formWrap').style.display = 'none';
+        $('doneTitle').textContent  = name + '님의 목소리가 저장됐어요!';
+        $('done').style.display     = 'block';
       } else {
         throw new Error(data.error || '업로드 실패');
       }
