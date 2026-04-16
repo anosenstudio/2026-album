@@ -5,66 +5,212 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>졸업 음성 메시지 녹음</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --gold:#c9a96e;--gold-dim:#8a6f3f;
-  --bg:#0f0e0d;--bg-card:#1a1814;
-  --border:#2a2720;--text:#f0ece4;
-  --muted:#8a7f6e;--faint:#3a3428;
-  --red:#c96e6e;--red-bg:#1e1413;--red-border:#3d2020;
-  --green:#6ec98a;--green-bg:#131e17;--green-border:#1e3d28;
+  --gold:#9a6f3f;
+  --gold-light:#c9a96e;
+  --gold-pale:#e8d5b0;
+  --bg:#f5f0e8;
+  --bg-card:#fffdf8;
+  --bg-deep:#ede6d8;
+  --border:#d9c9a8;
+  --border-light:#ede0c4;
+  --text:#2c2318;
+  --text-sub:#6b5740;
+  --muted:#9a8570;
+  --faint:#c8b899;
+  --red:#b05050;
+  --red-bg:#fdf2f2;
+  --red-border:#e8c4c4;
+  --green:#4a8c62;
+  --green-bg:#f2faf5;
+  --green-border:#b8ddc8;
 }
-body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);padding:2rem 1.5rem}
-.wrap{width:100%;max-width:380px;animation:up .5s ease both}
-@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.school{font-size:11px;letter-spacing:4px;color:var(--muted);text-align:center;margin-bottom:2rem}
-h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:600;text-align:center;margin-bottom:.4rem}
+body{
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(201,169,110,.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(154,111,63,.08) 0%, transparent 60%);
+  font-family:'Noto Sans KR',sans-serif;
+  color:var(--text);
+  padding:2.5rem 1.5rem;
+}
+
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wave{0%,100%{height:4px;opacity:.25}50%{height:38px;opacity:1}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(176,80,80,.2)}50%{box-shadow:0 0 0 12px rgba(176,80,80,0)}}
+@keyframes bloom{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+
+.wrap{width:100%;max-width:390px;animation:up .55s cubic-bezier(.22,1,.36,1) both}
+
+/* ── 헤더 ── */
+.deco-line{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:1.5rem}
+.deco-line span{display:block;height:1px;width:48px;background:linear-gradient(to right,transparent,var(--gold-light))}
+.deco-line span:last-child{background:linear-gradient(to left,transparent,var(--gold-light))}
+.deco-line i{font-style:normal;font-size:14px;color:var(--gold-light)}
+
+.school-badge{
+  text-align:center;font-size:11px;letter-spacing:3px;
+  color:var(--muted);margin-bottom:1.25rem;
+  font-weight:300;
+}
+h1{
+  font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;
+  text-align:center;margin-bottom:.4rem;color:var(--text);
+}
 .sub{font-size:13px;color:var(--muted);text-align:center;font-weight:300;margin-bottom:2rem}
-.divider{width:32px;height:1px;background:var(--faint);margin:0 auto 2rem}
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
-.lbl{font-size:11px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;display:block}
-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;margin-bottom:1.25rem}
-input:focus{border-color:var(--gold-dim)}
+
+/* ── 카드 ── */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border-light);
+  border-radius:18px;
+  padding:1.5rem;
+  margin-bottom:1rem;
+  box-shadow:0 2px 16px rgba(154,111,63,.06);
+}
+.lbl{
+  font-size:10px;letter-spacing:2.5px;
+  color:var(--muted);margin-bottom:8px;display:block;
+  font-weight:500;
+}
+input{
+  width:100%;padding:11px 14px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:10px;color:var(--text);
+  font-size:15px;font-family:'Noto Sans KR',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+  margin-bottom:1.25rem;
+}
+input:focus{border-color:var(--gold-light);box-shadow:0 0 0 3px rgba(201,169,110,.1)}
 input::placeholder{color:var(--faint)}
+
+/* ── 학반 행 ── */
 .class-row{display:flex;align-items:center;gap:8px}
-.grade-badge{padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0}
-select{flex:1;padding:10px 8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;appearance:none;-webkit-appearance:none;text-align:center;cursor:pointer}
-select:focus{border-color:var(--gold-dim)}
-select option{background:#1a1814}
-.timer{text-align:center;font-size:36px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:.4rem;transition:color .3s}
+.grade-badge{
+  padding:11px 14px;
+  background:var(--bg-deep);
+  border:1px solid var(--border);
+  border-radius:10px;
+  font-size:13px;color:var(--text-sub);
+  white-space:nowrap;flex-shrink:0;font-weight:500;
+}
+select{
+  flex:1;padding:11px 10px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:10px;color:var(--text);
+  font-size:15px;font-family:'Noto Sans KR',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+  appearance:none;-webkit-appearance:none;
+  text-align:center;cursor:pointer;
+}
+select:focus{border-color:var(--gold-light);box-shadow:0 0 0 3px rgba(201,169,110,.1)}
+select option{background:var(--bg-card)}
+
+/* ── 타이머 ── */
+.timer{
+  text-align:center;font-size:40px;font-weight:500;
+  font-variant-numeric:tabular-nums;letter-spacing:3px;
+  margin-bottom:.35rem;transition:color .3s;color:var(--text);
+}
 .timer.rec{color:var(--red)}
-.status{text-align:center;font-size:13px;color:var(--muted);min-height:20px;margin-bottom:1.5rem}
-.waveform{display:flex;align-items:center;justify-content:center;gap:4px;height:52px;margin-bottom:1.5rem}
-.bar{width:3px;border-radius:99px;background:var(--gold);height:4px;opacity:.2;transition:opacity .3s}
+.status{
+  text-align:center;font-size:12px;color:var(--muted);
+  min-height:20px;margin-bottom:1.75rem;letter-spacing:.3px;
+}
+
+/* ── 파형 ── */
+.waveform{display:flex;align-items:center;justify-content:center;gap:4px;height:48px;margin-bottom:1.75rem}
+.bar{width:3px;border-radius:99px;background:var(--gold-light);height:4px;opacity:.2;transition:opacity .3s}
 .waveform.recording .bar{animation:wave 1s ease-in-out infinite;opacity:1}
 .waveform.playing   .bar{animation:wave 1.4s ease-in-out infinite;background:var(--green);opacity:1}
-@keyframes wave{0%,100%{height:4px;opacity:.3}50%{height:40px;opacity:1}}
-.rec-btn{width:68px;height:68px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;transition:transform .12s,border-color .2s;background:#231f16;font-size:26px}
-.rec-btn:hover{border-color:var(--gold-dim);transform:scale(1.04)}
-.rec-btn:active{transform:scale(.95)}
-.rec-btn.recording{background:var(--red-bg);border-color:var(--red-border);animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,110,110,.25)}50%{box-shadow:0 0 0 10px rgba(201,110,110,0)}}
+
+/* ── 녹음 버튼 ── */
+.rec-btn{
+  width:70px;height:70px;border-radius:50%;
+  border:1.5px solid var(--border);
+  background:var(--bg-card);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 1.75rem;
+  font-size:26px;
+  transition:transform .12s,border-color .2s,box-shadow .2s;
+  box-shadow:0 2px 12px rgba(154,111,63,.1);
+}
+.rec-btn:hover{border-color:var(--gold-light);transform:scale(1.04);box-shadow:0 4px 20px rgba(154,111,63,.18)}
+.rec-btn:active{transform:scale(.94)}
+.rec-btn.recording{
+  background:var(--red-bg);border-color:var(--red-border);
+  animation:pulse 1.2s ease-in-out infinite;
+}
+
+/* ── 버튼 행 ── */
 .btn-row{display:flex;gap:8px;margin-bottom:8px}
-.btn{flex:1;padding:11px 0;border-radius:10px;border:1px solid var(--border);font-size:14px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:500;transition:background .15s,border-color .15s,transform .1s;background:transparent;color:var(--text)}
+.btn{
+  flex:1;padding:12px 0;
+  border-radius:10px;border:1.5px solid var(--border);
+  font-size:13px;font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer;font-weight:500;
+  transition:background .15s,border-color .15s,transform .1s,box-shadow .15s;
+  background:transparent;color:var(--text-sub);
+}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.btn-listen{color:var(--green);border-color:#1e3d28;background:var(--green-bg)}
-.btn-listen:hover:not(:disabled){background:#192b1f}
-.btn-listen.on{border-color:var(--green)}
-.btn-retry:hover:not(:disabled){background:#1e1c18}
-.btn-save{background:#231f16;border-color:var(--gold-dim);color:var(--gold)}
-.btn-save:hover:not(:disabled){background:#2a2415;border-color:var(--gold)}
-.alert{border-radius:10px;padding:1rem 1.25rem;font-size:13px;line-height:1.8;margin-top:1rem;display:none;text-align:center}
+
+.btn-listen{
+  color:var(--green);border-color:var(--green-border);
+  background:var(--green-bg);
+}
+.btn-listen:hover:not(:disabled){background:#e8f5ee;border-color:var(--green)}
+.btn-listen.on{border-color:var(--green);box-shadow:0 0 0 3px rgba(74,140,98,.08)}
+
+.btn-retry:hover:not(:disabled){background:var(--bg-deep);border-color:var(--faint)}
+
+.btn-save{
+  background:var(--bg-deep);
+  border-color:var(--gold-light);
+  color:var(--gold);
+}
+.btn-save:hover:not(:disabled){
+  background:var(--gold-pale);
+  border-color:var(--gold);
+  box-shadow:0 2px 12px rgba(154,111,63,.15);
+}
+
+/* ── 알림 ── */
+.alert{
+  border-radius:10px;padding:.875rem 1.25rem;
+  font-size:12px;line-height:1.9;
+  margin-top:.875rem;display:none;text-align:center;
+}
 .alert.err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
-.alert.load{background:#161513;border:1px solid var(--border);color:var(--muted)}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--faint);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.done{display:none;text-align:center;padding:2rem 0}
-.done .icon{font-size:56px;margin-bottom:1rem;display:block}
-.done .title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:600;margin-bottom:.75rem}
-.done .msg{font-size:13px;color:var(--muted);line-height:2}
-footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;margin-top:2rem}
+.alert.load{background:var(--bg-deep);border:1px solid var(--border);color:var(--muted)}
+.spin{
+  display:inline-block;width:12px;height:12px;
+  border:1.5px solid var(--faint);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:8px;
+}
+
+/* ── 완료 화면 ── */
+.done{display:none;text-align:center;padding:1.5rem 0;animation:fadeIn .6s ease both}
+.done .icon{font-size:58px;margin-bottom:1.25rem;display:block;animation:bloom .6s cubic-bezier(.22,1,.36,1) both}
+.done .title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:.6rem}
+.done .msg{font-size:13px;color:var(--text-sub);line-height:2.1}
+.done-divider{width:40px;height:1px;background:var(--faint);margin:1.5rem auto}
+
+/* ── 푸터 ── */
+footer{
+  text-align:center;font-size:10px;color:var(--faint);
+  letter-spacing:2px;margin-top:2rem;
+}
 </style>
 </head>
 <body>
@@ -76,17 +222,20 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
     const SCHOOL  = decodeURIComponent(params.get('school') || '');
   </script>
 
-  <div class="school" id="schoolLabel"></div>
+  <div class="deco-line"><span></span><i>✦</i><span></span></div>
+  <div class="school-badge" id="schoolLabel"></div>
   <h1>졸업 음성 메시지 녹음</h1>
   <p class="sub">소중한 목소리를 남겨주세요 🎤</p>
-  <div class="divider"></div>
 
   <div id="form">
+
+    <!-- 학교 입력 (URL에 school 없을 때만 표시) -->
     <div class="card" id="schoolCard" style="display:none">
       <label class="lbl">학교 이름</label>
       <input id="inputSchool" type="text" placeholder="예: ○○초등학교" style="margin-bottom:0" />
     </div>
 
+    <!-- 이름 / 학반 -->
     <div class="card">
       <label class="lbl">이름</label>
       <input id="inputName" type="text" placeholder="예: 홍길동" />
@@ -112,6 +261,7 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       </div>
     </div>
 
+    <!-- 녹음 카드 -->
     <div class="card">
       <div class="timer" id="timer">00:00</div>
       <div class="status" id="status">버튼을 눌러 녹음을 시작하세요</div>
@@ -145,7 +295,6 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       <div class="btn-row">
         <button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button>
       </div>
-
       <div class="btn-row">
         <button class="btn btn-retry" id="retryBtn" disabled onclick="retry()">다시 녹음</button>
         <button class="btn btn-save"  id="saveBtn"  disabled onclick="save()">저장하기 →</button>
@@ -154,11 +303,14 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
       <div class="alert err"  id="alertErr"></div>
       <div class="alert load" id="alertLoad"><span class="spin"></span>저장 중입니다…</div>
     </div>
+
   </div>
 
+  <!-- 완료 화면 -->
   <div class="done" id="done">
     <span class="icon">🎉</span>
     <div class="title" id="doneTitle"></div>
+    <div class="done-divider"></div>
     <div class="msg">
       녹음이 저장됐어요!<br>
       졸업앨범 QR코드를 스캔하면<br>
@@ -166,7 +318,7 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
     </div>
   </div>
 
-  <footer id="footer"></footer>
+  <footer>졸업앨범 음성 녹음 시스템</footer>
 </div>
 
 <script>
@@ -257,14 +409,14 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
   function retry() {
     blob = null;
     $('preview').pause();
-    $('preview').src        = '';
+    $('preview').src = '';
     $('listenBtn').disabled = true;
     $('listenBtn').textContent = '다시 듣기 ▶';
     $('listenBtn').classList.remove('on');
-    $('retryBtn').disabled  = true;
-    $('saveBtn').disabled   = true;
-    $('timer').textContent  = '00:00';
-    $('wave').className     = 'waveform';
+    $('retryBtn').disabled = true;
+    $('saveBtn').disabled  = true;
+    $('timer').textContent = '00:00';
+    $('wave').className    = 'waveform';
     clearAlerts();
     setStatus('버튼을 눌러 다시 녹음하세요');
   }
