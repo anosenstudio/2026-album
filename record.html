@@ -27,14 +27,11 @@ h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:600;text-align:c
 input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;margin-bottom:1.25rem}
 input:focus{border-color:var(--gold-dim)}
 input::placeholder{color:var(--faint)}
-
-/* 학반 드롭다운 행 */
 .class-row{display:flex;align-items:center;gap:8px}
 .grade-badge{padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 select{flex:1;padding:10px 8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .2s;appearance:none;-webkit-appearance:none;text-align:center;cursor:pointer}
 select:focus{border-color:var(--gold-dim)}
 select option{background:#1a1814}
-
 .timer{text-align:center;font-size:36px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:2px;margin-bottom:.4rem;transition:color .3s}
 .timer.rec{color:var(--red)}
 .status{text-align:center;font-size:13px;color:var(--muted);min-height:20px;margin-bottom:1.5rem}
@@ -48,7 +45,6 @@ select option{background:#1a1814}
 .rec-btn:active{transform:scale(.95)}
 .rec-btn.recording{background:var(--red-bg);border-color:var(--red-border);animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,110,110,.25)}50%{box-shadow:0 0 0 10px rgba(201,110,110,0)}}
-
 .btn-row{display:flex;gap:8px;margin-bottom:8px}
 .btn{flex:1;padding:11px 0;border-radius:10px;border:1px solid var(--border);font-size:14px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;font-weight:500;transition:background .15s,border-color .15s,transform .1s;background:transparent;color:var(--text)}
 .btn:active{transform:scale(.97)}
@@ -140,19 +136,16 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
         <div class="bar" style="animation-delay:.00s"></div>
       </div>
 
-      <!-- 숨겨진 오디오 — 다시 듣기 버튼으로 제어 -->
       <audio id="preview"
         onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on')"
         onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')"
         onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')">
       </audio>
 
-      <!-- 다시 듣기 -->
       <div class="btn-row">
         <button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button>
       </div>
 
-      <!-- 다시 녹음 + 저장 -->
       <div class="btn-row">
         <button class="btn btn-retry" id="retryBtn" disabled onclick="retry()">다시 녹음</button>
         <button class="btn btn-save"  id="saveBtn"  disabled onclick="save()">저장하기 →</button>
@@ -163,7 +156,6 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
     </div>
   </div>
 
-  <!-- 완료 화면 -->
   <div class="done" id="done">
     <span class="icon">🎉</span>
     <div class="title" id="doneTitle"></div>
@@ -258,12 +250,8 @@ footer{text-align:center;font-size:11px;color:var(--faint);letter-spacing:2px;ma
 
   function toggleListen() {
     const audio = $('preview');
-    if (audio.paused) {
-      audio.play();
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-    }
+    if (audio.paused) { audio.play(); }
+    else { audio.pause(); audio.currentTime = 0; }
   }
 
   function retry() {
