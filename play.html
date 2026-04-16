@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>졸업 메시지</title>
+<title>Neulstudio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -78,16 +78,12 @@ body{
 /* ── 뒤로가기 버튼 ── */
 .back-btn{
   display:inline-flex;align-items:center;gap:6px;
-  margin-top:1.5rem;
-  padding:9px 20px;border-radius:99px;
-  border:1.5px solid var(--border);
-  background:var(--bg-card);
-  color:var(--muted);
-  font-size:12px;font-family:'Noto Sans KR',sans-serif;
+  margin-top:1.5rem;padding:9px 20px;border-radius:99px;
+  border:1.5px solid var(--border);background:var(--bg-card);
+  color:var(--muted);font-size:12px;font-family:'Noto Sans KR',sans-serif;
   font-weight:400;cursor:pointer;
   transition:border-color .2s,color .2s,box-shadow .2s;
   box-shadow:0 1px 6px rgba(154,111,63,.06);
-  text-decoration:none;
 }
 .back-btn:hover{border-color:var(--faint);color:var(--text-sub);box-shadow:0 3px 12px rgba(154,111,63,.1)}
 .back-btn:active{transform:scale(.97)}
@@ -96,7 +92,7 @@ body{
 .done-wrap{display:none;text-align:center;animation:fadeIn .6s ease both}
 .done-icon{font-size:58px;display:block;margin-bottom:1.5rem;animation:bloom .6s cubic-bezier(.22,1,.36,1) both}
 .done-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:.6rem}
-.done-msg{font-size:13px;color:var(--text-sub);line-height:2.1;margin-bottom:0}
+.done-msg{font-size:13px;color:var(--text-sub);line-height:2.1}
 .done-divider{width:40px;height:1px;background:var(--faint);margin:1.5rem auto}
 
 .replay-btn{
@@ -110,7 +106,12 @@ body{
 .replay-btn:hover{border-color:var(--gold-light);color:var(--gold);box-shadow:0 4px 16px rgba(154,111,63,.15)}
 .replay-btn:active{transform:scale(.97)}
 
-.foot{margin-top:2.5rem;font-size:10px;color:var(--faint);letter-spacing:2px}
+footer{
+  text-align:center;font-size:11px;color:var(--faint);
+  letter-spacing:.5px;margin-top:2.5rem;
+  font-family:'Noto Serif KR',serif;
+  font-style:italic;
+}
 </style>
 </head>
 <body>
@@ -152,10 +153,9 @@ body{
 
     <div class="hint" id="hintMsg"></div>
 
-    <!-- 뒤로가기 버튼 -->
     <button class="back-btn" onclick="goBack()">← 뒤로가기</button>
 
-    <div class="foot">늘스튜디오</div>
+    <footer>소중한 순간은 늘 여기에, 늘스튜디오.</footer>
   </div>
 
   <!-- 완료 화면 -->
@@ -166,7 +166,7 @@ body{
     <div class="done-msg" id="doneMsg"></div>
     <div class="done-divider"></div>
     <button class="replay-btn" onclick="replayAudio()">▶&nbsp;&nbsp;다시 듣기</button>
-    <div class="foot" style="margin-top:2rem">늘스튜디오</div>
+    <footer style="margin-top:2rem">소중한 순간은 늘 여기에, 늘스튜디오.</footer>
   </div>
 
 </div>
@@ -265,13 +265,9 @@ body{
     player.play();
   }
 
-  // 뒤로가기 — 히스토리가 있으면 뒤로, 없으면 창 닫기 시도
   function goBack() {
-    if (history.length > 1) {
-      history.back();
-    } else {
-      window.close();
-    }
+    if (history.length > 1) { history.back(); }
+    else { window.close(); }
   }
 
   player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; });

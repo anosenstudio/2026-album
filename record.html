@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>졸업 음성 메시지 녹음</title>
+<title>Neulstudio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -56,8 +56,7 @@ body{
 .deco-line i{font-style:normal;font-size:14px;color:var(--gold-light)}
 
 .school-badge{text-align:center;font-size:11px;letter-spacing:3px;color:var(--muted);margin-bottom:1.25rem;font-weight:300}
-h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:.4rem;color:var(--text)}
-.sub{font-size:13px;color:var(--muted);text-align:center;font-weight:300;margin-bottom:2rem}
+h1{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:2rem;color:var(--text)}
 
 .card{
   background:var(--bg-card);border:1px solid var(--border-light);
@@ -155,7 +154,12 @@ select option{background:var(--bg-card)}
 .done-divider{width:40px;height:1px;background:var(--faint);margin:1.5rem auto}
 .done .msg{font-size:13px;color:var(--text-sub);line-height:2.2}
 
-footer{text-align:center;font-size:10px;color:var(--faint);letter-spacing:2px;margin-top:2rem}
+footer{
+  text-align:center;font-size:11px;color:var(--faint);
+  letter-spacing:.5px;margin-top:2rem;
+  font-family:'Noto Serif KR',serif;
+  font-style:italic;
+}
 </style>
 </head>
 <body>
@@ -171,7 +175,6 @@ footer{text-align:center;font-size:10px;color:var(--faint);letter-spacing:2px;ma
   <div class="deco-line"><span></span><i>✦</i><span></span></div>
   <div class="school-badge" id="schoolLabel"></div>
   <h1>졸업 음성 메시지 녹음</h1>
-  <p class="sub">소중한 목소리를 남겨주세요 🎤</p>
 
   <div id="form">
 
@@ -266,7 +269,7 @@ footer{text-align:center;font-size:10px;color:var(--faint);letter-spacing:2px;ma
     </div>
   </div>
 
-  <footer>늘스튜디오</footer>
+  <footer>소중한 순간은 늘 여기에, 늘스튜디오.</footer>
 </div>
 
 <script>
@@ -293,17 +296,17 @@ footer{text-align:center;font-size:10px;color:var(--faint);letter-spacing:2px;ma
     secs++;
     const remain = MAX_SEC - secs;
     const pct    = (secs / MAX_SEC) * 100;
-    $('timer').textContent    = pad(Math.floor(secs / 60)) + ':' + pad(secs % 60);
+    $('timer').textContent      = pad(Math.floor(secs / 60)) + ':' + pad(secs % 60);
     $('elapsedLbl').textContent = secs + '초';
     $('remainLbl').textContent  = remain + '초 남음';
     const bar = $('recBar');
     bar.style.width = pct + '%';
     if (remain <= 5) {
-      bar.className = 'rec-progress-bar danger';
+      bar.className            = 'rec-progress-bar danger';
       $('timer').className     = 'timer rec warn';
       $('remainLbl').className = 'time-remaining danger';
     } else if (remain <= 10) {
-      bar.className = 'rec-progress-bar warn';
+      bar.className            = 'rec-progress-bar warn';
       $('remainLbl').className = 'time-remaining warn';
     }
     if (secs >= MAX_SEC) {
