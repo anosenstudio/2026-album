@@ -65,40 +65,35 @@ body{
 .play-btn:active{transform:scale(.95)}
 .play-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
 
-/* ── 시크바 영역 ── */
+/* ── 시크바 ── */
 .seek-wrap{width:100%;display:none;margin-bottom:1.25rem}
 .seek-bar{
-  -webkit-appearance:none;
-  appearance:none;
-  width:100%;height:4px;
-  border-radius:99px;
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:4px;border-radius:99px;
   background:var(--border-light);
   outline:none;cursor:pointer;
-  /* 채워진 부분은 JS로 gradient 처리 */
 }
 .seek-bar::-webkit-slider-thumb{
   -webkit-appearance:none;
-  width:16px;height:16px;
-  border-radius:50%;
+  width:18px;height:18px;border-radius:50%;
   background:var(--gold);
-  border:2px solid var(--bg-card);
-  box-shadow:0 1px 4px rgba(154,111,63,.3);
-  cursor:pointer;
-  transition:transform .1s;
+  border:2.5px solid var(--bg-card);
+  box-shadow:0 1px 6px rgba(154,111,63,.35);
+  cursor:pointer;transition:transform .1s;
 }
 .seek-bar::-webkit-slider-thumb:active{transform:scale(1.3)}
 .seek-bar::-moz-range-thumb{
-  width:16px;height:16px;
-  border-radius:50%;
+  width:18px;height:18px;border-radius:50%;
   background:var(--gold);
-  border:2px solid var(--bg-card);
-  box-shadow:0 1px 4px rgba(154,111,63,.3);
+  border:2.5px solid var(--bg-card);
+  box-shadow:0 1px 6px rgba(154,111,63,.35);
   cursor:pointer;
 }
 .seek-time{
   display:flex;justify-content:space-between;
-  font-size:11px;color:var(--muted);margin-top:6px;
-  letter-spacing:.3px;font-variant-numeric:tabular-nums;
+  font-size:11px;color:var(--muted);
+  margin-top:7px;letter-spacing:.3px;
+  font-variant-numeric:tabular-nums;
 }
 
 .hint{font-size:12px;color:var(--muted);letter-spacing:.3px;min-height:18px;margin-bottom:.25rem}
@@ -170,13 +165,12 @@ footer{
       <input class="seek-bar" id="seekBar" type="range" min="0" max="100" value="0" step="0.1">
       <div class="seek-time">
         <span id="timeCurrent">0:00</span>
-        <span id="timeDuration">0:00</span>
+        <span id="timeDuration">--:--</span>
       </div>
     </div>
 
     <div class="hint" id="hintMsg"></div>
-
-    <footer>소중한 순간은 늘 여기에 ㅣ 늘스튜디오</footer>
+    <footer>소중한 순간은 늘 여기에 - 늘스튜디오</footer>
   </div>
 
   <!-- 완료 화면 -->
@@ -187,7 +181,7 @@ footer{
     <div class="done-msg"   id="doneMsg"></div>
     <div class="done-divider"></div>
     <button class="replay-btn" onclick="replayAudio()">▶&nbsp;&nbsp;다시 듣기</button>
-    <footer style="margin-top:2rem">소중한 순간은 늘 여기에 ㅣ 늘스튜디오</footer>
+    <footer style="margin-top:2rem">소중한 순간은 늘 여기에 - 늘스튜디오</footer>
   </div>
 
 </div>
@@ -200,21 +194,21 @@ footer{
   const name   = decodeURIComponent(p.get('n') || '');
   const cls    = decodeURIComponent(p.get('c') || '');
 
-  const nameEl      = document.getElementById('nameEl');
-  const clsEl       = document.getElementById('clsEl');
-  const player      = document.getElementById('player');
-  const wave        = document.getElementById('wave');
-  const playBtn     = document.getElementById('playBtn');
-  const hintMsg     = document.getElementById('hintMsg');
-  const spinWrap    = document.getElementById('spinWrap');
-  const seekWrap    = document.getElementById('seekWrap');
-  const seekBar     = document.getElementById('seekBar');
-  const timeCurrent = document.getElementById('timeCurrent');
-  const timeDuration= document.getElementById('timeDuration');
-  const playerWrap  = document.getElementById('playerWrap');
-  const doneWrap    = document.getElementById('doneWrap');
-  const doneTitle   = document.getElementById('doneTitle');
-  const doneMsg     = document.getElementById('doneMsg');
+  const nameEl       = document.getElementById('nameEl');
+  const clsEl        = document.getElementById('clsEl');
+  const player       = document.getElementById('player');
+  const wave         = document.getElementById('wave');
+  const playBtn      = document.getElementById('playBtn');
+  const hintMsg      = document.getElementById('hintMsg');
+  const spinWrap     = document.getElementById('spinWrap');
+  const seekWrap     = document.getElementById('seekWrap');
+  const seekBar      = document.getElementById('seekBar');
+  const timeCurrent  = document.getElementById('timeCurrent');
+  const timeDuration = document.getElementById('timeDuration');
+  const playerWrap   = document.getElementById('playerWrap');
+  const doneWrap     = document.getElementById('doneWrap');
+  const doneTitle    = document.getElementById('doneTitle');
+  const doneMsg      = document.getElementById('doneMsg');
 
   if (!fileId) {
     spinWrap.style.display = 'none';
@@ -245,18 +239,22 @@ footer{
 
   // 시간 포맷 (초 → m:ss)
   function fmt(sec) {
+    if (!sec || isNaN(sec) || !isFinite(sec)) return '0:00';
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return m + ':' + String(s).padStart(2, '0');
   }
 
-  // 시크바 색상 업데이트 (채워진 부분 골드)
+  // 시크바 채운 색상 업데이트
   function updateSeekColor(pct) {
-    const filled = `rgba(201,169,110,1)`;
-    const empty  = `var(--border-light)`;
     seekBar.style.background =
-      `linear-gradient(to right, ${filled} ${pct}%, ${empty} ${pct}%)`;
+      `linear-gradient(to right, var(--gold-light) ${pct}%, var(--border-light) ${pct}%)`;
   }
+
+  // ★ loadedmetadata: duration 확정 시점 → 전체 시간 표시
+  player.addEventListener('loadedmetadata', () => {
+    timeDuration.textContent = fmt(player.duration);
+  });
 
   // 재생 준비 완료
   player.addEventListener('canplay', () => {
@@ -264,28 +262,34 @@ footer{
     seekWrap.style.display  = 'block';
     playBtn.disabled        = false;
     hintMsg.textContent     = '버튼을 눌러 음성을 들어보세요';
-    timeDuration.textContent = fmt(player.duration || 0);
+    // loadedmetadata가 먼저 왔을 수도 있으니 한 번 더 보정
+    if (player.duration && isFinite(player.duration)) {
+      timeDuration.textContent = fmt(player.duration);
+    }
     updateSeekColor(0);
     player.play().catch(() => {});
   }, { once: true });
 
   // 재생 중 시크바 / 시간 업데이트
   player.addEventListener('timeupdate', () => {
-    if (!player.duration) return;
+    if (!player.duration || !isFinite(player.duration)) return;
     const pct = (player.currentTime / player.duration) * 100;
-    seekBar.value = pct;
+    if (!isSeeking) {
+      seekBar.value = pct;
+      updateSeekColor(pct);
+    }
     timeCurrent.textContent = fmt(player.currentTime);
-    updateSeekColor(pct);
   });
 
-  // 시크바 드래그 → 재생 위치 이동
+  // 시크바 드래그
   let isSeeking = false;
   seekBar.addEventListener('mousedown',  () => { isSeeking = true; });
   seekBar.addEventListener('touchstart', () => { isSeeking = true; }, { passive: true });
   seekBar.addEventListener('input', () => {
-    const seekTo = (seekBar.value / 100) * player.duration;
+    const pct    = parseFloat(seekBar.value);
+    const seekTo = (pct / 100) * player.duration;
     timeCurrent.textContent = fmt(seekTo);
-    updateSeekColor(parseFloat(seekBar.value));
+    updateSeekColor(pct);
   });
   seekBar.addEventListener('change', () => {
     player.currentTime = (seekBar.value / 100) * player.duration;
