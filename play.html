@@ -57,7 +57,7 @@ body{
   border:1.5px solid var(--border);background:var(--bg-card);color:var(--gold);
   font-size:20px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  margin:0 auto 1.25rem;
+  margin:0 auto 1.5rem;
   transition:border-color .2s,transform .12s,box-shadow .2s;
   box-shadow:0 2px 12px rgba(154,111,63,.12);
 }
@@ -65,10 +65,43 @@ body{
 .play-btn:active{transform:scale(.95)}
 .play-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
 
-.progress{width:100%;height:3px;background:var(--border-light);border-radius:99px;margin-bottom:1.5rem;overflow:hidden;display:none}
-.progress-bar{height:100%;width:0%;background:linear-gradient(to right,var(--gold-light),var(--gold));border-radius:99px;transition:width .3s linear}
+/* ── 시크바 영역 ── */
+.seek-wrap{width:100%;display:none;margin-bottom:1.25rem}
+.seek-bar{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;height:4px;
+  border-radius:99px;
+  background:var(--border-light);
+  outline:none;cursor:pointer;
+  /* 채워진 부분은 JS로 gradient 처리 */
+}
+.seek-bar::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--gold);
+  border:2px solid var(--bg-card);
+  box-shadow:0 1px 4px rgba(154,111,63,.3);
+  cursor:pointer;
+  transition:transform .1s;
+}
+.seek-bar::-webkit-slider-thumb:active{transform:scale(1.3)}
+.seek-bar::-moz-range-thumb{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--gold);
+  border:2px solid var(--bg-card);
+  box-shadow:0 1px 4px rgba(154,111,63,.3);
+  cursor:pointer;
+}
+.seek-time{
+  display:flex;justify-content:space-between;
+  font-size:11px;color:var(--muted);margin-top:6px;
+  letter-spacing:.3px;font-variant-numeric:tabular-nums;
+}
 
-.hint{font-size:12px;color:var(--muted);letter-spacing:.3px;min-height:18px}
+.hint{font-size:12px;color:var(--muted);letter-spacing:.3px;min-height:18px;margin-bottom:.25rem}
 .hint.err{color:#b05050;font-size:12px;line-height:1.8}
 
 .spin-wrap{margin-bottom:1.75rem}
@@ -81,9 +114,6 @@ body{
 .done-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:.6rem}
 .done-msg{font-size:13px;color:var(--text-sub);line-height:2.1}
 .done-divider{width:40px;height:1px;background:var(--faint);margin:1.5rem auto}
-
-.btn-group{display:flex;flex-direction:column;align-items:center;gap:10px}
-
 .replay-btn{
   display:inline-flex;align-items:center;gap:8px;
   padding:10px 24px;border-radius:99px;
@@ -91,30 +121,14 @@ body{
   font-size:13px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;
   transition:border-color .2s,color .2s,box-shadow .2s;
   box-shadow:0 2px 8px rgba(154,111,63,.08);
-  width:180px;justify-content:center;
 }
 .replay-btn:hover{border-color:var(--gold-light);color:var(--gold);box-shadow:0 4px 16px rgba(154,111,63,.15)}
 .replay-btn:active{transform:scale(.97)}
 
-/* ── 카톡 닫기 버튼 ── */
-.close-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 24px;border-radius:99px;
-  border:1.5px solid var(--border-light);
-  background:transparent;
-  color:var(--faint);
-  font-size:12px;font-family:'Noto Sans KR',sans-serif;font-weight:400;cursor:pointer;
-  transition:border-color .2s,color .2s;
-  width:180px;justify-content:center;
-}
-.close-btn:hover{border-color:var(--faint);color:var(--muted)}
-.close-btn:active{transform:scale(.97)}
-
 footer{
   text-align:center;font-size:11px;color:var(--faint);
   letter-spacing:.5px;margin-top:2.5rem;
-  font-family:'Noto Serif KR',serif;
-  font-style:italic;
+  font-family:'Noto Serif KR',serif;font-style:italic;
 }
 </style>
 </head>
@@ -148,12 +162,17 @@ footer{
       <div class="load-txt">음성을 불러오는 중…</div>
     </div>
 
-    <div class="progress" id="progressWrap">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-
     <button class="play-btn" id="playBtn" disabled onclick="togglePlay()">▶</button>
     <audio id="player"></audio>
+
+    <!-- 시크바 -->
+    <div class="seek-wrap" id="seekWrap">
+      <input class="seek-bar" id="seekBar" type="range" min="0" max="100" value="0" step="0.1">
+      <div class="seek-time">
+        <span id="timeCurrent">0:00</span>
+        <span id="timeDuration">0:00</span>
+      </div>
+    </div>
 
     <div class="hint" id="hintMsg"></div>
 
@@ -165,12 +184,9 @@ footer{
     <div class="deco-line"><span></span><i>✦</i><span></span></div>
     <span class="done-icon">🎓</span>
     <div class="done-title" id="doneTitle"></div>
-    <div class="done-msg" id="doneMsg"></div>
+    <div class="done-msg"   id="doneMsg"></div>
     <div class="done-divider"></div>
-    <div class="btn-group">
-      <button class="replay-btn" onclick="replayAudio()">▶&nbsp;&nbsp;다시 듣기</button>
-      <button class="close-btn"  onclick="closeWindow()">✕&nbsp;&nbsp;창 닫기</button>
-    </div>
+    <button class="replay-btn" onclick="replayAudio()">▶&nbsp;&nbsp;다시 듣기</button>
     <footer style="margin-top:2rem">소중한 순간은 늘 여기에 ㅣ 늘스튜디오</footer>
   </div>
 
@@ -184,19 +200,21 @@ footer{
   const name   = decodeURIComponent(p.get('n') || '');
   const cls    = decodeURIComponent(p.get('c') || '');
 
-  const nameEl       = document.getElementById('nameEl');
-  const clsEl        = document.getElementById('clsEl');
-  const player       = document.getElementById('player');
-  const wave         = document.getElementById('wave');
-  const playBtn      = document.getElementById('playBtn');
-  const hintMsg      = document.getElementById('hintMsg');
-  const spinWrap     = document.getElementById('spinWrap');
-  const progressWrap = document.getElementById('progressWrap');
-  const progressBar  = document.getElementById('progressBar');
-  const playerWrap   = document.getElementById('playerWrap');
-  const doneWrap     = document.getElementById('doneWrap');
-  const doneTitle    = document.getElementById('doneTitle');
-  const doneMsg      = document.getElementById('doneMsg');
+  const nameEl      = document.getElementById('nameEl');
+  const clsEl       = document.getElementById('clsEl');
+  const player      = document.getElementById('player');
+  const wave        = document.getElementById('wave');
+  const playBtn     = document.getElementById('playBtn');
+  const hintMsg     = document.getElementById('hintMsg');
+  const spinWrap    = document.getElementById('spinWrap');
+  const seekWrap    = document.getElementById('seekWrap');
+  const seekBar     = document.getElementById('seekBar');
+  const timeCurrent = document.getElementById('timeCurrent');
+  const timeDuration= document.getElementById('timeDuration');
+  const playerWrap  = document.getElementById('playerWrap');
+  const doneWrap    = document.getElementById('doneWrap');
+  const doneTitle   = document.getElementById('doneTitle');
+  const doneMsg     = document.getElementById('doneMsg');
 
   if (!fileId) {
     spinWrap.style.display = 'none';
@@ -225,17 +243,53 @@ footer{
     }
   }
 
+  // 시간 포맷 (초 → m:ss)
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  // 시크바 색상 업데이트 (채워진 부분 골드)
+  function updateSeekColor(pct) {
+    const filled = `rgba(201,169,110,1)`;
+    const empty  = `var(--border-light)`;
+    seekBar.style.background =
+      `linear-gradient(to right, ${filled} ${pct}%, ${empty} ${pct}%)`;
+  }
+
+  // 재생 준비 완료
   player.addEventListener('canplay', () => {
-    spinWrap.style.display     = 'none';
-    progressWrap.style.display = 'block';
-    playBtn.disabled           = false;
-    hintMsg.textContent        = '버튼을 눌러 음성을 들어보세요';
+    spinWrap.style.display  = 'none';
+    seekWrap.style.display  = 'block';
+    playBtn.disabled        = false;
+    hintMsg.textContent     = '버튼을 눌러 음성을 들어보세요';
+    timeDuration.textContent = fmt(player.duration || 0);
+    updateSeekColor(0);
     player.play().catch(() => {});
   }, { once: true });
 
+  // 재생 중 시크바 / 시간 업데이트
   player.addEventListener('timeupdate', () => {
     if (!player.duration) return;
-    progressBar.style.width = (player.currentTime / player.duration * 100) + '%';
+    const pct = (player.currentTime / player.duration) * 100;
+    seekBar.value = pct;
+    timeCurrent.textContent = fmt(player.currentTime);
+    updateSeekColor(pct);
+  });
+
+  // 시크바 드래그 → 재생 위치 이동
+  let isSeeking = false;
+  seekBar.addEventListener('mousedown',  () => { isSeeking = true; });
+  seekBar.addEventListener('touchstart', () => { isSeeking = true; }, { passive: true });
+  seekBar.addEventListener('input', () => {
+    const seekTo = (seekBar.value / 100) * player.duration;
+    timeCurrent.textContent = fmt(seekTo);
+    updateSeekColor(parseFloat(seekBar.value));
+  });
+  seekBar.addEventListener('change', () => {
+    player.currentTime = (seekBar.value / 100) * player.duration;
+    isSeeking = false;
   });
 
   player.addEventListener('error', () => {
@@ -245,10 +299,11 @@ footer{
     playBtn.disabled = true;
   });
 
+  // 재생 끝 → 완료 화면
   player.addEventListener('ended', () => {
     wave.className = 'waveform';
     playBtn.textContent = '▶';
-    progressBar.style.width = '100%';
+    updateSeekColor(100);
     setTimeout(() => {
       playerWrap.style.display = 'none';
       doneWrap.style.display   = 'block';
@@ -259,28 +314,17 @@ footer{
 
   function togglePlay() {
     if (player.paused) { player.play(); }
-    else { player.pause(); player.currentTime = 0; }
+    else { player.pause(); }
   }
 
   function replayAudio() {
     doneWrap.style.display   = 'none';
     playerWrap.style.display = 'block';
-    progressBar.style.width  = '0%';
+    seekBar.value = 0;
+    updateSeekColor(0);
+    timeCurrent.textContent = '0:00';
     player.currentTime = 0;
     player.play();
-  }
-
-  // 카카오톡 인앱 브라우저에서 창 닫기
-  function closeWindow() {
-    // 카카오톡 웹뷰 전용 닫기
-    if (window.KakaoTalk) {
-      window.KakaoTalk.closeWindow();
-      return;
-    }
-    // 일반 window.close (카카오톡 인앱에서도 동작하는 경우 많음)
-    window.close();
-    // close가 막힌 경우 history back 시도
-    setTimeout(() => { history.back(); }, 300);
   }
 
   player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; });
