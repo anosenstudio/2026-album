@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>늘스튜디오 — 졸업 음성 메시지</title>
+<!-- lamejs: 브라우저에서 MP3 변환 -->
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 
@@ -11,7 +13,6 @@
 
 :root {
   --cream:   #F7F8FA;
-  --warm:    #EEF4FF;
   --card:    #FFFFFF;
   --primary: #3182F6;
   --pri-lt:  #5B9DF8;
@@ -47,46 +48,40 @@ body {
   animation: rise .65s cubic-bezier(.22,1,.36,1) both;
 }
 
-/* 구분선 */
 .hr { display:flex; align-items:center; gap:10px; margin-bottom:2.25rem; }
 .hr-line { flex:1; height:1px; background:linear-gradient(to right,transparent,var(--border)); }
 .hr-line:last-child { background:linear-gradient(to left,transparent,var(--border)); }
 .hr-dot { width:5px; height:5px; border-radius:50%; background:var(--pri-lt); opacity:.7; }
 
-/* 이름/반 */
 .identity { text-align:center; margin-bottom:1.75rem; padding:0 .5rem; }
 .cls-label {
-  font-size: 15px; font-weight:400;
-  color: var(--primary);
-  letter-spacing:.8px; margin-bottom:.5rem; line-height:1.6;
+  font-size:15px; font-weight:400;
+  color:var(--primary); letter-spacing:.8px;
+  margin-bottom:.5rem; line-height:1.6;
 }
 .name-label {
-  font-family: 'Noto Serif KR', serif;
+  font-family:'Noto Serif KR',serif;
   font-size:22px; font-weight:600;
   color:var(--text); letter-spacing:-.3px; line-height:1.45;
 }
 
-/* 플레이어 카드 */
 .player-card {
-  background: var(--card);
-  border: 1px solid var(--border-l);
-  border-radius: 20px;
-  padding: 1.875rem 1.5rem 1.5rem;
-  box-shadow: 0 4px 24px var(--shadow), 0 1px 4px var(--shadow2);
-  margin-bottom: 1rem;
+  background:var(--card);
+  border:1px solid var(--border-l);
+  border-radius:20px;
+  padding:1.875rem 1.5rem 1.5rem;
+  box-shadow:0 4px 24px var(--shadow), 0 1px 4px var(--shadow2);
+  margin-bottom:1rem;
 }
 
-/* 파형 */
 .waveform { display:flex; align-items:center; justify-content:center; gap:4px; height:44px; margin-bottom:1.625rem; }
 .bar { width:3px; border-radius:99px; background:var(--pri-lt); height:3px; opacity:.2; }
 .waveform.playing .bar { animation:wave 1.35s ease-in-out infinite; }
 
-/* 로딩 */
 .spin-wrap { text-align:center; padding:.25rem 0 1.125rem; }
 .spinner { display:inline-block; width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin .8s linear infinite; }
 .load-txt { font-size:11.5px; color:var(--muted); margin-top:.625rem; letter-spacing:.5px; }
 
-/* 재생 버튼 */
 .play-btn {
   width:58px; height:58px; border-radius:50%;
   border:none; background:var(--pri-bg); color:var(--primary);
@@ -100,7 +95,6 @@ body {
 .play-btn:active { transform:scale(.93); }
 .play-btn:disabled { opacity:.3; cursor:not-allowed; transform:none; box-shadow:none; }
 
-/* 시크바 */
 .seek-wrap { display:none; }
 .seek-bar {
   -webkit-appearance:none; appearance:none;
@@ -117,52 +111,66 @@ body {
 .seek-bar::-webkit-slider-thumb:active { transform:scale(1.35); }
 .seek-bar::-moz-range-thumb {
   width:15px; height:15px; border-radius:50%;
-  background:var(--primary); border:2.5px solid var(--card);
-  cursor:pointer;
+  background:var(--primary); border:2.5px solid var(--card); cursor:pointer;
 }
 .seek-time { font-size:11px; color:var(--muted); margin-top:9px; letter-spacing:.3px; font-variant-numeric:tabular-nums; }
 
-.hint { font-size:12px; color:var(--muted); letter-spacing:.3px; min-height:18px; text-align:center; margin-top:.875rem; line-height:1.7; }
+.hint { font-size:12px; color:var(--muted); min-height:18px; text-align:center; margin-top:.875rem; line-height:1.7; }
 .hint.err { color:#D94F4F; }
 
-/* 다운로드 섹션 */
+/* ── 저장 카드 ── */
 .dl-section {
   display:none;
   background:var(--card);
   border:1px solid var(--border-l);
-  border-radius:14px;
-  padding:1rem 1.125rem;
+  border-radius:16px;
+  overflow:hidden;
   margin-bottom:.625rem;
   box-shadow:0 1px 3px var(--shadow2);
   animation:slide .4s ease both;
 }
-.dl-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.dl-info p   { font-size:13px; font-weight:500; color:var(--sub); line-height:1.5; margin-bottom:2px; }
+
+/* 안내 배너 */
+.dl-guide {
+  background:#EBF3FE;
+  padding:.75rem 1.125rem;
+  border-bottom:1px solid var(--border-l);
+}
+.dl-guide p {
+  font-size:12px; color:var(--sub);
+  line-height:1.9;
+}
+.dl-guide strong { color:var(--primary); }
+
+/* 버튼 영역 */
+.dl-body { padding:1rem 1.125rem; }
+.dl-row  { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.dl-info p     { font-size:13px; font-weight:500; color:var(--sub); margin-bottom:2px; }
 .dl-info small { font-size:11px; color:var(--muted); font-weight:300; }
+
 .dl-btn {
-  flex-shrink:0; padding:9px 16px; border-radius:10px;
+  flex-shrink:0;
+  display:flex; align-items:center; gap:6px;
+  padding:10px 18px; border-radius:10px;
   border:none; background:var(--primary); color:#fff;
-  font-size:12px; font-family:'Noto Sans KR',sans-serif; font-weight:500;
+  font-size:13px; font-family:'Noto Sans KR',sans-serif; font-weight:500;
   cursor:pointer; white-space:nowrap;
-  transition:background .15s, transform .1s;
+  transition:background .15s, transform .1s, opacity .15s;
+  min-width:110px; justify-content:center;
 }
-.dl-btn:hover  { background:var(--pri-lt); }
+.dl-btn:hover:not(:disabled) { background:var(--pri-lt); }
 .dl-btn:active { transform:scale(.95); }
-
-/* ★ 저장 안내 (Google Drive 경고 포함) */
-.save-note {
-  display:none;
-  background:#FFFBEB;
-  border:1px solid #FDE68A;
-  border-radius:10px;
-  padding:.75rem 1rem;
-  margin-bottom:.75rem;
-  animation:fadeIn .5s .1s ease both;
+.dl-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.dl-btn .btn-spin {
+  display:none; width:12px; height:12px;
+  border:2px solid rgba(255,255,255,.4); border-top-color:#fff;
+  border-radius:50%; animation:spin .7s linear infinite;
+  flex-shrink:0;
 }
-.save-note p { font-size:11.5px; color:#92400E; line-height:1.9; }
-.save-note strong { color:#78350F; }
+.dl-btn.converting .btn-spin { display:block; }
+.dl-btn.converting .btn-text { opacity:.7; }
 
-/* 정책 안내 */
+/* 정책 */
 .policy-note {
   display:none; text-align:center;
   font-size:11px; color:var(--faint);
@@ -186,9 +194,13 @@ body {
   transition:background .2s, box-shadow .2s;
   box-shadow:0 2px 10px rgba(49,130,246,.15);
 }
-.replay-btn:hover { background:#D8EAFD; box-shadow:0 5px 18px rgba(49,130,246,.22); }
+.replay-btn:hover { background:#D8EAFD; }
 
-footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.6px; margin-top:2rem; font-family:'Noto Serif KR',serif; font-style:italic; font-weight:300; }
+footer {
+  text-align:center; font-size:11px; color:var(--faint);
+  letter-spacing:.6px; margin-top:2rem;
+  font-family:'Noto Serif KR',serif; font-style:italic; font-weight:300;
+}
 </style>
 </head>
 <body>
@@ -197,9 +209,7 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
   <!-- 재생 화면 -->
   <div id="playerWrap">
     <div class="hr">
-      <div class="hr-line"></div>
-      <div class="hr-dot"></div>
-      <div class="hr-line"></div>
+      <div class="hr-line"></div><div class="hr-dot"></div><div class="hr-line"></div>
     </div>
 
     <div class="identity">
@@ -230,31 +240,35 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
         <input class="seek-bar" id="seekBar" type="range" min="0" max="100" value="0" step="0.1">
         <div class="seek-time"><span id="timeCurrent">0:00</span></div>
       </div>
-
       <div class="hint" id="hintMsg"></div>
     </div>
 
-    <!-- 저장 안내 (Google Drive 경고) -->
-    <div class="save-note" id="saveNote">
-      <p>
-        📁 <strong>Google Drive에서는 재생이 안 될 수 있어요.</strong><br>
-        파일 앱 또는 음악 앱에서 열어주세요.<br>
-        아이폰은 아래 버튼 → <strong>파일에 저장</strong>을 선택하세요.
-      </p>
-    </div>
-
-    <!-- 다운로드 -->
+    <!-- ★ 저장 카드 -->
     <div class="dl-section" id="dlSection">
-      <div class="dl-row">
-        <div class="dl-info">
-          <p>내 기기에 저장하기</p>
-          <small>음성 파일을 직접 보관하세요</small>
+      <!-- 안내 배너 -->
+      <div class="dl-guide">
+        <p>
+          <strong>MP3</strong>로 변환 후 저장돼요.<br>
+          아이폰: 공유 시트 → <strong>카카오톡</strong> 또는 <strong>파일에 저장</strong><br>
+          안드로이드 / PC: 자동 다운로드
+        </p>
+      </div>
+      <!-- 버튼 -->
+      <div class="dl-body">
+        <div class="dl-row">
+          <div class="dl-info">
+            <p>내 기기에 저장하기</p>
+            <small>Google Drive·카카오톡·파일 앱에서 재생 가능</small>
+          </div>
+          <button class="dl-btn" id="dlBtn" onclick="downloadMp3()">
+            <span class="btn-spin"></span>
+            <span class="btn-text">⬇ MP3 저장</span>
+          </button>
         </div>
-        <button class="dl-btn" onclick="downloadAudio()">⬇ 저장</button>
       </div>
     </div>
 
-    <!-- 1년 정책 -->
+    <!-- 정책 -->
     <div class="policy-note" id="policyNote">
       ※ 음성 파일은 제공일로부터 <strong>1년간</strong> 보관됩니다.<br>
       소중한 목소리는 위 버튼으로 직접 저장해 두세요.
@@ -286,27 +300,27 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
   const urlName = decodeURIComponent(p.get('n') || '');
   const urlCls  = decodeURIComponent(p.get('c') || '');
 
-  const nameEl     = document.getElementById('nameEl');
-  const clsEl      = document.getElementById('clsEl');
-  const player     = document.getElementById('player');
-  const wave       = document.getElementById('wave');
-  const playBtn    = document.getElementById('playBtn');
-  const hintMsg    = document.getElementById('hintMsg');
-  const spinWrap   = document.getElementById('spinWrap');
-  const seekWrap   = document.getElementById('seekWrap');
-  const seekBar    = document.getElementById('seekBar');
-  const timeCurrent= document.getElementById('timeCurrent');
-  const playerWrap = document.getElementById('playerWrap');
-  const doneWrap   = document.getElementById('doneWrap');
-  const doneTitle  = document.getElementById('doneTitle');
-  const doneMsg    = document.getElementById('doneMsg');
-  const dlSection  = document.getElementById('dlSection');
-  const saveNote   = document.getElementById('saveNote');
-  const policyNote = document.getElementById('policyNote');
+  const nameEl      = document.getElementById('nameEl');
+  const clsEl       = document.getElementById('clsEl');
+  const player      = document.getElementById('player');
+  const wave        = document.getElementById('wave');
+  const playBtn     = document.getElementById('playBtn');
+  const hintMsg     = document.getElementById('hintMsg');
+  const spinWrap    = document.getElementById('spinWrap');
+  const seekWrap    = document.getElementById('seekWrap');
+  const seekBar     = document.getElementById('seekBar');
+  const timeCurrent = document.getElementById('timeCurrent');
+  const playerWrap  = document.getElementById('playerWrap');
+  const doneWrap    = document.getElementById('doneWrap');
+  const doneTitle   = document.getElementById('doneTitle');
+  const doneMsg     = document.getElementById('doneMsg');
+  const dlSection   = document.getElementById('dlSection');
+  const dlBtn       = document.getElementById('dlBtn');
+  const policyNote  = document.getElementById('policyNote');
 
   let verifiedName = urlName;
   let verifiedCls  = urlCls;
-  let audioBlobUrl = '';
+  let rawBlob      = null;   // 원본 blob (WebM/OGG/MP4)
   let audioMime    = 'audio/webm';
 
   if (!fileId) {
@@ -325,7 +339,6 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || '파일 로드 실패');
 
-      // 서버 이름/반 우선 (보안)
       if (data.name)      { verifiedName = data.name;      nameEl.textContent = data.name + '의 졸업 메시지'; }
       if (data.className) { verifiedCls  = data.className; clsEl.textContent  = data.className; }
 
@@ -333,9 +346,8 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
       const binary = atob(data.b64);
       const bytes  = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob = new Blob([bytes], { type: audioMime });
-      audioBlobUrl = URL.createObjectURL(blob);
-      player.src = audioBlobUrl;
+      rawBlob = new Blob([bytes], { type: audioMime });
+      player.src = URL.createObjectURL(rawBlob);
       player.load();
     } catch {
       spinWrap.style.display = 'none';
@@ -348,7 +360,6 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
     if (!sec || isNaN(sec) || !isFinite(sec)) return '0:00';
     return Math.floor(sec/60) + ':' + String(Math.floor(sec%60)).padStart(2,'0');
   }
-
   function updateSeekColor(pct) {
     seekBar.style.background =
       `linear-gradient(to right, var(--primary) ${pct}%, var(--border-l) ${pct}%)`;
@@ -358,7 +369,6 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
     spinWrap.style.display   = 'none';
     seekWrap.style.display   = 'block';
     dlSection.style.display  = 'block';
-    saveNote.style.display   = 'block';
     policyNote.style.display = 'block';
     playBtn.disabled         = false;
     hintMsg.textContent      = '버튼을 눌러 음성을 들어보세요';
@@ -406,10 +416,8 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
   });
 
   function togglePlay() {
-    if (player.paused) player.play();
-    else player.pause();
+    if (player.paused) player.play(); else player.pause();
   }
-
   function replayAudio() {
     doneWrap.style.display   = 'none';
     playerWrap.style.display = 'block';
@@ -418,39 +426,106 @@ footer { text-align:center; font-size:11px; color:var(--faint); letter-spacing:.
     player.currentTime = 0; player.play();
   }
 
-  // ★ iOS: Web Share API → 공유 시트에서 "파일에 저장" 선택
-  // Android/PC: 일반 blob 다운로드
-  async function downloadAudio() {
-    if (!audioBlobUrl) return;
-    const ext = audioMime.includes('mp4') ? 'm4a'
-              : audioMime.includes('ogg') ? 'ogg'
-              : 'webm';
-    const filename = (verifiedName || '학생') + '_졸업메시지.' + ext;
-
-    // iOS Safari는 Web Share API로 처리
-    try {
-      if (navigator.canShare) {
-        const res  = await fetch(audioBlobUrl);
-        const blob = await res.blob();
-        const file = new File([blob], filename, { type: audioMime });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: filename });
-          return;
-        }
-      }
-    } catch (e) { /* Web Share 실패 시 일반 다운로드로 fallback */ }
-
-    // 일반 다운로드 (Android, PC)
-    const a = document.createElement('a');
-    a.href = audioBlobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
   player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; });
   player.addEventListener('pause', () => { wave.className='waveform';         playBtn.textContent='▶'; });
+
+  // ──────────────────────────────────────────
+  //  ★ MP3 변환 → 공유/다운로드
+  //  1) AudioContext로 PCM 디코딩
+  //  2) lamejs로 MP3 인코딩
+  //  3) Web Share API (iOS → 카카오톡 or 파일에 저장)
+  //     or anchor download (Android / PC)
+  // ──────────────────────────────────────────
+  async function downloadMp3() {
+    if (!rawBlob) return;
+
+    // 버튼 로딩 상태
+    dlBtn.disabled = true;
+    dlBtn.classList.add('converting');
+    dlBtn.querySelector('.btn-text').textContent = 'MP3 변환 중…';
+
+    try {
+      const mp3Blob = await convertToMp3(rawBlob);
+      const filename = (verifiedName || '학생') + '_졸업메시지.mp3';
+
+      // iOS: Web Share API → 카카오톡 / 파일에 저장
+      try {
+        if (navigator.canShare) {
+          const file = new File([mp3Blob], filename, { type: 'audio/mpeg' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: filename });
+            return;
+          }
+        }
+      } catch (e) { /* 공유 취소 또는 미지원 → 일반 다운로드 */ }
+
+      // Android / PC: 바로 다운로드
+      const url = URL.createObjectURL(mp3Blob);
+      const a   = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+    } catch (err) {
+      alert('변환 중 오류가 발생했습니다.\n' + err.message);
+    } finally {
+      dlBtn.disabled = false;
+      dlBtn.classList.remove('converting');
+      dlBtn.querySelector('.btn-text').textContent = '⬇ MP3 저장';
+    }
+  }
+
+  // lamejs를 사용한 MP3 변환
+  async function convertToMp3(blob) {
+    // 1. ArrayBuffer 읽기
+    const arrayBuffer = await blob.arrayBuffer();
+
+    // 2. AudioContext로 PCM 디코딩
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    ctx.close();
+
+    const channels   = Math.min(audioBuffer.numberOfChannels, 2); // 최대 스테레오
+    const sampleRate = audioBuffer.sampleRate;
+    const numFrames  = audioBuffer.length;
+
+    // 3. lamejs MP3 인코더 초기화 (모노 or 스테레오, 128kbps)
+    const encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+
+    // Float32 → Int16 변환 헬퍼
+    const toInt16 = (f32) => {
+      const i16 = new Int16Array(f32.length);
+      for (let i = 0; i < f32.length; i++) {
+        i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
+      }
+      return i16;
+    };
+
+    const leftF32  = audioBuffer.getChannelData(0);
+    const rightF32 = channels > 1 ? audioBuffer.getChannelData(1) : leftF32;
+    const leftI16  = toInt16(leftF32);
+    const rightI16 = toInt16(rightF32);
+
+    // 4. 블록 단위 인코딩
+    const mp3Parts = [];
+    const BLOCK    = 1152; // lamejs 권장 블록 크기
+
+    for (let i = 0; i < numFrames; i += BLOCK) {
+      const lChunk = leftI16.subarray(i, i + BLOCK);
+      const rChunk = rightI16.subarray(i, i + BLOCK);
+      const buf = channels > 1
+        ? encoder.encodeBuffer(lChunk, rChunk)
+        : encoder.encodeBuffer(lChunk);
+      if (buf.length > 0) mp3Parts.push(new Uint8Array(buf));
+    }
+
+    // 5. 플러시
+    const flush = encoder.flush();
+    if (flush.length > 0) mp3Parts.push(new Uint8Array(flush));
+
+    return new Blob(mp3Parts, { type: 'audio/mpeg' });
+  }
 </script>
 </body>
 </html>
