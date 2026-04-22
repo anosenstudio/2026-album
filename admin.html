@@ -173,8 +173,9 @@ footer{margin-top:3rem;font-size:11px;color:var(--faint);letter-spacing:2px;text
 
   // QR URL: fileId + 이름 + 학반 직접 포함 → play.html이 GAS 없이 바로 재생
   function makeUrl(s) {
-    // fileId 하나만 포함 → URL 최소화 → QR 단순화
-    // 이름/반/학교는 play.html이 서버(GAS)에서 직접 조회
+    // ★ shortId 사용 → URL 최소화 → QR 단순화
+    // shortId 없는 구버전 레코드는 fileId로 fallback
+    if (s.shortId) return getPagesUrl() + '/play.html?id=' + s.shortId;
     return getPagesUrl() + '/play.html?f=' + encodeURIComponent(s.fileId);
   }
 
