@@ -77,12 +77,24 @@ select{cursor:pointer;appearance:none;-webkit-appearance:none}
 .dl-toggle.off{background:var(--red-bg);color:var(--red)}
 .dl-toggle.off:hover{background:#FFE5E7}
 .dl-toggle:disabled{opacity:.4;cursor:not-allowed}
-.share-btn{padding:7px 11px;border-radius:8px;border:none;background:#FEE500;color:#3A1D1D;font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;display:flex;align-items:center;gap:4px}
-.share-btn:hover{background:#FFD700}
-.share-btn.done{background:var(--green-bg);color:var(--green)}
 .copy-btn{padding:7px 11px;border-radius:8px;border:none;background:var(--input-bg);color:var(--sub);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
 .copy-btn:hover{background:#E9EAEC}
 .copy-btn.done{background:var(--green-bg);color:var(--green)}
+.period-btn{padding:7px 11px;border-radius:8px;border:none;background:var(--pri-bg);color:var(--primary);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
+.period-btn:hover{background:#D8EAFD}
+/* 인라인 기간 편집 패널 */
+.period-panel{display:none;margin-top:.75rem;padding:.875rem;background:var(--card);border-radius:10px;border:1.5px solid var(--pri-lt);animation:fadeIn .2s ease both}
+.period-panel.open{display:block}
+.period-panel .pp-title{font-size:12px;font-weight:600;color:var(--primary);margin-bottom:.625rem}
+.period-panel .pp-row{display:flex;gap:6px;align-items:center;margin-bottom:.5rem;flex-wrap:wrap}
+.period-panel .pp-row input[type="date"]{flex:1;min-width:110px;padding:9px 10px;font-size:13px}
+.period-panel .pp-sep{font-size:12px;color:var(--muted);flex-shrink:0}
+.period-panel .pp-btns{display:flex;gap:6px;margin-top:.25rem}
+.pp-save{padding:8px 16px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:12px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s}
+.pp-save:hover:not(:disabled){background:var(--pri-lt)}
+.pp-save:disabled{opacity:.4;cursor:not-allowed}
+.pp-clear{padding:8px 12px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:12px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
+.pp-clear:hover{background:#E9EAEC}
 .pw-del{padding:7px 11px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
 .pw-del:hover{background:#E9EAEC}
 .pw-del:disabled{opacity:.5;cursor:not-allowed}
@@ -180,7 +192,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       <p style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:.75rem">
         <strong style="color:var(--green)">⬇ 다운 ON</strong> = MP3 저장 허용 &nbsp;·&nbsp;
         <strong style="color:var(--red)">⬇ 다운 OFF</strong> = 저장 버튼 숨김<br>
-        <strong>📋 복사</strong> / <strong style="color:#9A7000">💬 카톡</strong> 버튼으로 학부모·학생에게 링크 공유
+        <strong>📋 복사</strong> 버튼으로 학부모·학생에게 링크 공유
       </p>
       <div class="pw-list" id="pwList"><div class="pw-empty">불러오는 중…</div></div>
       <div class="btn-row" style="margin-top:1rem">
@@ -377,21 +389,34 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
             <span class="pw-school">🏫 ${p.school}</span>
             <span class="pw-value">🔒 ${p.password}</span>
           </div>
-          <div class="pw-dates">${dateStr}</div>
+          <div class="pw-dates" id="pddates-${encSc}">${dateStr}</div>
           <div class="pw-actions">
             <button class="dl-toggle ${dlOn?'on':'off'}" id="dltog-${encSc}"
               onclick="toggleDownload('${safeSc}',${dlOn})" title="${dlOn?'클릭시 다운로드 차단':'클릭시 다운로드 허용'}">
               ⬇ 다운 ${dlOn?'ON':'OFF'}
             </button>
+            <button class="period-btn" onclick="togglePeriodPanel('${encSc}')">
+              📅 기간 설정
+            </button>
             <button class="copy-btn" id="copybtn-${encSc}"
               onclick="copyShareMsg('${safeSc}','${encSc}')">
               📋 복사
             </button>
-            <button class="share-btn" id="kakobtn-${encSc}"
-              onclick="shareKakao('${safeSc}')">
-              💬 카톡
-            </button>
             <button class="pw-del" onclick="deletePassword('${safeSc}')">삭제</button>
+          </div>
+          <div class="period-panel" id="pp-${encSc}">
+            <div class="pp-title">📅 녹음 기간 수정</div>
+            <div class="pp-row">
+              <input type="date" id="ppstart-${encSc}" value="${p.startDate||''}" />
+              <span class="pp-sep">~</span>
+              <input type="date" id="ppend-${encSc}"   value="${p.endDate||''}" />
+            </div>
+            <div class="pp-btns">
+              <button class="pp-save" id="ppsave-${encSc}"
+                onclick="savePeriodInline('${safeSc}','${encSc}')">저장</button>
+              <button class="pp-clear"
+                onclick="clearPeriodInline('${encSc}')">기간 삭제</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -485,7 +510,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         }
       }
     });
-    const recordUrl = getPagesUrl() + '/record.html?school=' + encodeURIComponent(school);
+    const recordUrl = getPagesUrl() + '/record.html?school=' + school;
     let msg = `🎓 ${school} 졸업 음성 메시지 녹음 안내\n\n`;
     msg += `📎 녹음 링크\n${recordUrl}\n`;
     if (pw) msg += `\n🔒 비밀번호: ${pw}`;
@@ -508,20 +533,44 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     setTimeout(() => { btn.textContent='📋 복사'; btn.classList.remove('done'); }, 2000);
   }
 
-  function shareKakao(school) {
-    const msg = buildShareMsg(school);
-    if (navigator.share) {
-      navigator.share({ title: school + ' 녹음 안내', text: msg }).catch(()=>{});
-    } else {
-      window.open('kakaotalk://msg?text=' + encodeURIComponent(msg), '_blank');
-      setTimeout(() => {
-        if (!document.hidden) {
-          navigator.clipboard.writeText(msg).then(() =>
-            alert('카카오톡이 열리지 않으면 클립보드에 복사된 내용을 붙여넣기 해주세요!')
-          ).catch(()=>{});
-        }
-      }, 1500);
-    }
+
+
+  /* ── 인라인 기간 설정 ── */
+  function togglePeriodPanel(encSc) {
+    const panel = document.getElementById('pp-' + encSc);
+    if (!panel) return;
+    panel.classList.toggle('open');
+  }
+
+  async function savePeriodInline(school, encSc) {
+    const start = (document.getElementById('ppstart-' + encSc)?.value || '').trim();
+    const end   = (document.getElementById('ppend-'   + encSc)?.value || '').trim();
+    if (start && end && start > end) { alert('종료일이 시작일보다 빠릅니다.'); return; }
+    const btn = document.getElementById('ppsave-' + encSc);
+    if (btn) btn.disabled = true;
+    try {
+      // 비밀번호는 현재 표시된 값 재사용
+      const row = document.getElementById('pwrow-' + encSc);
+      const pw  = row?.querySelector('.pw-value')?.textContent.replace('🔒 ','').trim() || '';
+      const res  = await fetch(getGasUrl(), {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'setPassword', school, password:pw, startDate:start, endDate:end }),
+        redirect:'follow'
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMsg('pwDelOk', '✓ ' + school + ' 기간이 저장됐습니다.');
+        document.getElementById('pp-' + encSc)?.classList.remove('open');
+        loadPasswords();
+      } else { alert('저장 실패: ' + (data.error||'')); if(btn) btn.disabled=false; }
+    } catch(err) { alert('오류: ' + err.message); if(btn) btn.disabled=false; }
+  }
+
+  function clearPeriodInline(encSc) {
+    const s = document.getElementById('ppstart-' + encSc);
+    const e = document.getElementById('ppend-'   + encSc);
+    if (s) s.value = '';
+    if (e) e.value = '';
   }
 
   function showMsg(id, msg) {
