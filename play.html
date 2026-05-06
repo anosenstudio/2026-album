@@ -375,41 +375,55 @@ async function fetchWithTimeout(url, ms) {
   }
 }
 
-/* ── 2단계 로딩
-   Phase 1: meta (시트 조회만, ~0.5초) → 학생 정보 즉시 표시
-   Phase 2: audio (Drive b64, ~3~10초) → 오디오 로드
-────────────────────────────────────── */
+/* ── 학생 정보 UI 업데이트 ── */
+function applyInfo(school, name, cls, dl) {
+  verifiedName   = name   || '';
+  verifiedSchool = school || '';
+  dlEnabled      = (dl !== false);
+  const nameDisp = [cls, name].filter(Boolean).join(' · ');
+  ovSchool.textContent    = school   || '졸업앨범';
+  ovStudent.textContent   = nameDisp || '';
+  schoolName.textContent  = school   || '졸업앨범';
+  studentInfo.textContent = nameDisp || '';
+}
+
+/* ════════════════════════════════════════════
+   2단계 로딩 (meta 실패해도 audio로 자동 폴백)
+   Phase 1: meta  → 학생 정보 빠르게 표시
+   Phase 2: audio → b64 blob 생성 후 재생
+════════════════════════════════════════════ */
 async function loadAudio() {
   try {
-    /* Phase 1 ─ 메타데이터 (빠름) */
-    ovLoading.innerHTML = '<span class="ov-spin"></span>정보를 불러오는 중…';
-    const metaRes  = await fetchWithTimeout(
-      GAS_URL + '?action=meta&f=' + encodeURIComponent(fileId), 20000
-    );
-    const meta = await metaRes.json();
-    if (!meta.ok) throw new Error(meta.error || '파일을 찾을 수 없습니다');
+    /* ── Phase 1: 메타데이터 (빠른 경로, 실패해도 무시) ── */
+    ovLoading.innerHTML = '<span class="ov-spin"></span>불러오는 중…';
+    let metaLoaded = false;
+    try {
+      const metaRes = await fetchWithTimeout(
+        GAS_URL + '?action=meta&f=' + encodeURIComponent(fileId), 12000
+      );
+      const meta = await metaRes.json();
+      if (meta && meta.ok) {
+        applyInfo(meta.school, meta.name, meta.className, meta.downloadEnabled);
+        ovLoading.innerHTML = '<span class="ov-spin"></span>음성 파일 로드 중…';
+        metaLoaded = true;
+      }
+    } catch(eMeta) {
+      /* meta 액션 없거나 실패 — Phase 2에서 정보 가져옴 */
+    }
 
-    verifiedName   = meta.name      || '';
-    verifiedSchool = meta.school    || '';
-    dlEnabled      = meta.downloadEnabled !== false;
-    const cls      = meta.className || '';
-
-    /* 학생 정보 즉시 표시 */
-    ovSchool.textContent  = verifiedSchool || '졸업앨범';
-    ovStudent.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
-    schoolName.textContent  = verifiedSchool || '졸업앨범';
-    studentInfo.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
-
-    /* Phase 2 ─ 오디오 데이터 (느리지만 확실) */
-    ovLoading.innerHTML = '<span class="ov-spin"></span>음성 파일 로드 중…';
-
+    /* ── Phase 2: 오디오 데이터 (b64, 확실한 방법) ── */
     const audioRes = await fetchWithTimeout(
       GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId), 60000
     );
     const audioData = await audioRes.json();
-    if (!audioData.ok) throw new Error(audioData.error || '오디오 로드 실패');
+    if (!audioData || !audioData.ok)
+      throw new Error((audioData && audioData.error) || '오디오를 불러올 수 없습니다');
 
-    /* blob URL 생성 → 오디오 세팅 */
+    /* meta 실패했으면 audio 응답에서 정보 적용 */
+    if (!metaLoaded)
+      applyInfo(audioData.school, audioData.name, audioData.className, audioData.downloadEnabled);
+
+    /* Blob URL 생성 → player 세팅 */
     const mime   = audioData.mime || 'audio/webm';
     const binary = atob(audioData.b64);
     const bytes  = new Uint8Array(binary.length);
@@ -425,8 +439,9 @@ async function loadAudio() {
 
   } catch(err) {
     ovLoading.style.display = 'none';
-    ovSchool.textContent    = err.name === 'AbortError' ? '연결 시간 초과' : '불러오기 실패';
-    ovStudent.textContent   = err.name === 'AbortError'
+    const isTimeout = err.name === 'AbortError';
+    ovSchool.textContent  = isTimeout ? '연결 시간 초과' : '불러오기 실패';
+    ovStudent.textContent = isTimeout
       ? '네트워크를 확인하고 다시 시도해 주세요'
       : (err.message || '잠시 후 다시 시도해 주세요');
     document.getElementById('ovRetry').style.display = 'block';
@@ -435,12 +450,13 @@ async function loadAudio() {
 
 function retryLoad() {
   document.getElementById('ovRetry').style.display = 'none';
-  ovLoading.innerHTML     = '<span class="ov-spin"></span>정보를 불러오는 중…';
+  ovLoading.innerHTML     = '<span class="ov-spin"></span>불러오는 중…';
   ovLoading.style.display = 'flex';
   ovSchool.textContent    = '';
   ovStudent.textContent   = '';
   ovHint.style.display    = 'none';
   ovSub.style.display     = 'none';
+  rawBlob = null;
   loadAudio();
 }
 
