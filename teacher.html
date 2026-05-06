@@ -130,7 +130,13 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         <div class="pw-wrap">
           <input id="inPw" type="password" placeholder="선생님 비밀번호"
             oninput="clearErr()" onkeydown="if(event.key==='Enter')login()" />
-          <button class="pw-eye" onclick="toggleEye()">👁</button>
+          <button class="pw-eye" id="eyeToggle" onclick="toggleEye()" aria-label="비밀번호 표시">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="12" rx="9" ry="5.5"/>
+              <circle cx="12" cy="12" r="2.5"/>
+              <line id="tEyeSlash" x1="3" y1="3" x2="21" y2="21" style="display:none"/>
+            </svg>
+          </button>
         </div>
       </div>
       <div class="err-txt" id="errTxt"></div>
@@ -198,7 +204,9 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
   /* ── 로그인 ── */
   function toggleEye() {
     const i = $('inPw');
-    i.type = i.type === 'password' ? 'text' : 'password';
+    const isHidden = i.type === 'password';
+    i.type = isHidden ? 'text' : 'password';
+    document.getElementById('tEyeSlash').style.display = isHidden ? 'block' : 'none';
   }
   function clearErr() { $('errTxt').textContent = ''; }
   function showErr(msg) {
@@ -386,9 +394,64 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     }
   }
 
+  /* ── 오디오 로드: Drive URL 우선(빠름) → audioBin 폴백 ── */
+  let currentRaf = null;
+
+  function startRAF(fileId, audio) {
+    stopRAF();
+    const ms = $('ms-' + fileId);
+    const mt = $('mt-' + fileId);
+    function tick() {
+      if (audio.duration && isFinite(audio.duration)) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        ms.value = pct;
+        mt.textContent = fmtSec(audio.currentTime);
+        updateMiniSeek(ms, pct);
+      }
+      if (!audio.paused && !audio.ended) currentRaf = requestAnimationFrame(tick);
+    }
+    currentRaf = requestAnimationFrame(tick);
+  }
+  function stopRAF() {
+    if (currentRaf) { cancelAnimationFrame(currentRaf); currentRaf = null; }
+  }
+
   async function fetchAudio(fileId) {
     $('ml-' + fileId).style.display = 'block';
     $('pc-' + fileId).style.display = 'none';
+    try {
+      /* Phase 1: Drive URL로 즉시 재생 시도 (~1초) */
+      const res  = await fetch(GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId));
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || '로드 실패');
+
+      const audio = new Audio();
+      audio.src = data.driveUrl;
+      const driveOk = await new Promise(resolve => {
+        const tid = setTimeout(() => resolve(false), 5000);
+        audio.addEventListener('canplay', () => { clearTimeout(tid); resolve(true); }, { once: true });
+        audio.addEventListener('error',   () => { clearTimeout(tid); resolve(false); }, { once: true });
+        audio.load();
+      });
+
+      if (driveOk) {
+        loadedAudios[fileId] = { audio };
+        wireAudio(fileId, audio);
+        return;
+      }
+
+      /* Phase 2 폴백: audioBin (b64) */
+      $('mst-' + fileId) && ($('mst-' + fileId).textContent = '재시도 중…');
+      await fetchAudioFallback(fileId);
+
+    } catch(err) {
+      $('ml-' + fileId).style.display = 'none';
+      $('pc-' + fileId).style.display = 'block';
+      $('mst-' + fileId).textContent  = '불러오기 실패: ' + err.message;
+    }
+  }
+
+  async function fetchAudioFallback(fileId) {
     try {
       const res  = await fetch(GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId));
       const data = await res.json();
@@ -399,7 +462,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       const blob  = new Blob([bytes], { type: data.mime || 'audio/webm' });
       const audio = new Audio();
       audio.src   = URL.createObjectURL(blob);
-      loadedAudios[fileId] = { blob, audio };
+      loadedAudios[fileId] = { audio };
       wireAudio(fileId, audio);
     } catch(err) {
       $('ml-' + fileId).style.display = 'none';
@@ -424,17 +487,9 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       updateMiniSeek(ms, 0);
     }, { once: true });
 
-    audio.addEventListener('timeupdate', () => {
-      if (!audio.duration || !isFinite(audio.duration)) return;
-      const pct = (audio.currentTime / audio.duration) * 100;
-      ms.value    = pct;
-      mt.textContent = fmtSec(audio.currentTime);
-      updateMiniSeek(ms, pct);
-    });
-
-    audio.addEventListener('play',  () => { mw.className='mini-wave playing'; mp.textContent='■'; mst.textContent='재생 중'; });
-    audio.addEventListener('pause', () => { mw.className='mini-wave'; mp.textContent='▶'; mst.textContent=''; });
-    audio.addEventListener('ended', () => { mw.className='mini-wave'; mp.textContent='▶'; updateMiniSeek(ms,100); mst.textContent='재생 완료'; });
+    audio.addEventListener('play',  () => { mw.className='mini-wave playing'; mp.textContent='■'; mst.textContent='재생 중'; startRAF(fileId, audio); });
+    audio.addEventListener('pause', () => { mw.className='mini-wave'; mp.textContent='▶'; mst.textContent=''; stopRAF(); });
+    audio.addEventListener('ended', () => { mw.className='mini-wave'; mp.textContent='▶'; updateMiniSeek(ms,100); mst.textContent='재생 완료'; stopRAF(); });
     audio.addEventListener('error', () => { mst.textContent='재생 오류'; mp.disabled=true; });
 
     ms.addEventListener('change', () => {
