@@ -357,11 +357,12 @@ const BGM = (() => {
         if (!freq || freq < 20) return;
         const o=oac.createOscillator(), g=oac.createGain();
         o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(lmaster);
-        g.gain.setValueAtTime(0,time);
-        g.gain.linearRampToValueAtTime(vol,time+.35);
-        g.gain.setValueAtTime(vol*.8,time+dur-.35);
-        g.gain.linearRampToValueAtTime(0,time+dur);
-        o.start(time); o.stop(time+dur+.05);
+        const fade = Math.min(.35, dur * .4);  // 음표 길이에 맞게 페이드 조정
+        g.gain.setValueAtTime(0, time);
+        g.gain.linearRampToValueAtTime(vol, time + fade);
+        if (dur > fade * 2.2) g.gain.setValueAtTime(vol * .8, time + dur - fade);
+        g.gain.linearRampToValueAtTime(0, time + dur);
+        o.start(time); o.stop(time + dur + .05);
       }
       function lschedule(t0) {
         MEL.forEach(([f,sb,db,v]) => lnote(f, t0+sb*B, db*B, v));
@@ -710,14 +711,20 @@ async function mixAndConvertToMp3(blob) {
   const duration   = voiceBuffer.duration;
   const sampleRate = voiceBuffer.sampleRate;
 
-  /* BGM 오프라인 렌더링 */
-  const bgmBuffer = await BGM.renderBGM(duration, sampleRate);
+  /* BGM 오프라인 렌더링 (실패 시 음성만 저장) */
+  let bgmBuffer = null;
+  try {
+    bgmBuffer = await BGM.renderBGM(duration, sampleRate);
+  } catch(e) {
+    console.warn('[BGM render 실패, 음성만 저장]', e.message);
+  }
 
   /* 채널 데이터 추출 */
   const voiceL = voiceBuffer.getChannelData(0);
   const voiceR = voiceBuffer.numberOfChannels > 1 ? voiceBuffer.getChannelData(1) : voiceL;
-  const bgmL   = bgmBuffer.numberOfChannels > 0 ? bgmBuffer.getChannelData(0) : new Float32Array(voiceBuffer.length);
-  const bgmR   = bgmBuffer.numberOfChannels > 1 ? bgmBuffer.getChannelData(1) : bgmL;
+  const empty  = new Float32Array(voiceBuffer.length);
+  const bgmL   = bgmBuffer ? bgmBuffer.getChannelData(0) : empty;
+  const bgmR   = bgmBuffer && bgmBuffer.numberOfChannels > 1 ? bgmBuffer.getChannelData(1) : bgmL;
 
   /* 믹싱: 음성 100% + BGM 35% (클리핑 방지) */
   const len    = voiceBuffer.length;
