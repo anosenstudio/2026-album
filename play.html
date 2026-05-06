@@ -169,14 +169,20 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 ════════════════════════════════════════════════ */
 const BGM = (() => {
   let el = null, rafId = null;
-  const TARGET_VOL = 0.50; // 재생 볼륨 (0~1)
+  const TARGET_VOL = 0.50;
+  const BGM_SRC    = './bgm_salut.mp3';
+
+  /* ── 페이지 로드 시 MP3를 ArrayBuffer로 사전 로딩 ──
+     decodeAudioData()는 ArrayBuffer를 소비(detach)하므로
+     renderBGM 호출마다 .slice(0)으로 복제해서 사용한다 */
+  let bgmArrayBuffer = null;
+  fetch(BGM_SRC)
+    .then(r => r.arrayBuffer())
+    .then(ab => { bgmArrayBuffer = ab; })
+    .catch(e => console.warn('[BGM preload 실패]', e));
 
   function getEl() {
-    if (!el) {
-      el = document.getElementById('bgmAudio');
-      el.volume = 0;
-      el.loop   = true;
-    }
+    if (!el) { el = document.getElementById('bgmAudio'); el.volume = 0; el.loop = true; }
     return el;
   }
 
@@ -200,7 +206,7 @@ const BGM = (() => {
       if (!audio.paused) return;
       audio.currentTime = 0;
       audio.play().catch(() => {});
-      rampVol(0, TARGET_VOL, 2500); // 2.5초 페이드인
+      rampVol(0, TARGET_VOL, 2500);
     },
     fadeOut(dur = 2.5) {
       const audio = getEl();
@@ -209,23 +215,23 @@ const BGM = (() => {
     restart() {
       const audio = getEl();
       cancelAnimationFrame(rafId);
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = 0;
+      audio.pause(); audio.currentTime = 0; audio.volume = 0;
       audio.play().catch(() => {});
-      rampVol(0, TARGET_VOL, 500); // 재시작은 빠르게 페이드인
+      rampVol(0, TARGET_VOL, 500);
     },
 
-    /* ── 오프라인 렌더링: MP3를 AudioBuffer로 디코딩 후 반환 ── */
+    /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
     async renderBGM(duration, sampleRate) {
-      const audio  = getEl();
-      const res    = await fetch(audio.src);
-      const arrBuf = await res.arrayBuffer();
+      // 사전 로딩 실패 시 재시도
+      if (!bgmArrayBuffer) {
+        const res = await fetch(BGM_SRC);
+        bgmArrayBuffer = await res.arrayBuffer();
+      }
 
-      // MP3 디코딩
-      const AC      = window.AudioContext || window.webkitAudioContext;
-      const tmpCtx  = new AC();
-      const bgmBuf  = await tmpCtx.decodeAudioData(arrBuf);
+      // ※ decodeAudioData는 ArrayBuffer를 detach하므로 반드시 .slice(0)으로 복제
+      const AC     = window.AudioContext || window.webkitAudioContext;
+      const tmpCtx = new AC();
+      const bgmBuf = await tmpCtx.decodeAudioData(bgmArrayBuffer.slice(0));
       await tmpCtx.close();
 
       const sr  = sampleRate || 44100;
