@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>늘스튜디오 — QR 관리</title>
+<title>QR 관리</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -23,7 +23,6 @@ body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif
 @keyframes spin  {to{transform:rotate(360deg)}}
 .page{max-width:900px;margin:0 auto;animation:up .5s cubic-bezier(.22,1,.36,1) both}
 .top-header{margin-bottom:2rem}
-.studio-tag{font-size:11px;font-weight:600;color:var(--primary);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:.5rem}
 .page-title{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:.25rem}
 .page-desc{font-size:14px;color:var(--muted);font-weight:300}
 
@@ -126,7 +125,6 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
 <body>
 <div class="page">
   <div class="top-header">
-    <div class="studio-tag">늘스튜디오</div>
     <div class="page-title">관리자</div>
     <div class="page-desc">QR 생성 · 비밀번호 · 기간 관리</div>
   </div>
@@ -234,7 +232,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     </div>
   </div>
 
-  <footer>졸업앨범 음성 QR 관리 · 늘스튜디오</footer>
+  <footer>졸업앨범 음성 QR 관리</footer>
 </div>
 
 <script>
@@ -381,7 +379,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         const safeSc = p.school.replace(/'/g,"\\'");
         const badge  = getPeriodBadge(p.startDate, p.endDate);
         const dateStr = (p.startDate || p.endDate)
-          ? `<span>📅 ${p.startDate||'?'} ~ ${p.endDate||'?'}</span> ${badge}`
+          ? `<span>${p.startDate||'?'} ~ ${p.endDate||'?'}</span> ${badge}`
           : '<span style="color:var(--faint)">기간 없음 (항상 허용)</span>';
         return `
         <div class="pw-row" id="pwrow-${encSc}">
@@ -515,7 +513,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     msg += `📎 녹음 링크\n${recordUrl}\n`;
     if (pw) msg += `\n🔒 비밀번호: ${pw}`;
     if (startDate || endDate) msg += `\n\n📅 녹음 기간\n${startDate||'?'} ~ ${endDate||'?'}`;
-    msg += '\n\n늘스튜디오';
+    
     return msg;
   }
 

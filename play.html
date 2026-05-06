@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>늘스튜디오 — 졸업 음성 메시지</title>
+<title>졸업 음성 메시지</title>
 <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
@@ -93,7 +93,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 <!-- ── 터치 오버레이 ── -->
 <div class="overlay" id="overlay" onclick="startPlayback()">
   <div class="ov-inner">
-    <div class="ov-school"  id="ovSchool">늘스튜디오</div>
+    <div class="ov-school"  id="ovSchool"></div>
     <div class="ov-student" id="ovStudent"></div>
     <div class="ov-desc">졸업 음성 메시지</div>
     <div class="ring-wrap">
@@ -132,7 +132,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
     </div>
     <div class="status" id="statusMsg"></div>
   </div>
-  <footer>소중한 순간은 늘 여기에 · 늘스튜디오</footer>
+  <footer>졸업앨범 음성 메시지</footer>
 </div>
 
 <!-- ── 완료 화면 ── -->
@@ -152,116 +152,128 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   <div class="policy-note" id="policyNote">
     <p>⚠️ 음성 파일은 제공일로부터 <strong>1년 후 삭제</strong>됩니다.<br>위 버튼으로 지금 바로 저장해 두세요!</p>
   </div>
-  <footer style="margin-top:2.5rem">소중한 순간은 늘 여기에 · 늘스튜디오</footer>
+  <footer style="margin-top:2.5rem">졸업앨범 음성 메시지</footer>
 </div>
 
 <script>
 /* ════════════════════════════════════════════════
-   BGM — Web Audio API 피아노 앰비언트
-   C장조, 감동적인 선율, BPM 58, 8바 루프 (~34초)
-   저작권 없음 — 100% 코드 생성
+   BGM — 따뜻하고 가벼운 G장조 피아노
+   G major · BPM 76 · 아르페지오 반주 · 저작권 없음
 ════════════════════════════════════════════════ */
 const BGM = (() => {
   let ac = null, master = null, on = false, loopTimer = null;
 
-  const BPM  = 58;
-  const B    = 60 / BPM;          // 1박 ≈ 1.034초
+  const B = 60 / 76; // 1박 ≈ 0.789초
 
-  // 음표 주파수
-  const E5=659.25, D5=587.33, C5=523.25, B4=493.88, A4=440,
-        G4=392,    F4=349.23, E4=329.63, D4=293.66, C4=261.63,
-        A3=220,    F3=174.61, G3=196,    C3=130.81,  G2=98;
+  // G장조 음표
+  const G2=98, D3=146.83, G3=196, A3=220, B3=246.94,
+        C4=261.63, D4=293.66, E4=329.63, F4s=369.99, G4=392,
+        A4=440, B4=493.88, C5=523.25, D5=587.33, E5=659.25,
+        F5s=739.99, G5=783.99;
 
-  // 멜로디: [주파수, 시작(박), 길이(박), 볼륨]
-  // Phrase 1 (C-Am-F-G) — 잔잔한 도입
-  // Phrase 2 (C-Am-F-G) — 감정 고조
-  // 두 번째 반복에서 F5 클라이맥스
-  const MELODY = [
-    // ── Bar 1 (C) ──
-    [E5, 0,    1.5, 0.52], [D5, 1.5, 0.5, 0.42],
-    [C5, 2,    1.0, 0.50], [G4, 3,   1.0, 0.40],
-    // ── Bar 2 (Am) ──
-    [A4, 4,    1.0, 0.48], [C5, 5,   1.5, 0.50],
-    [B4, 6.5,  0.5, 0.40], [A4, 7,   1.0, 0.46],
-    // ── Bar 3 (F) ──
-    [C5, 8,    1.0, 0.50], [A4, 9,   1.0, 0.46],
-    [G4, 10,   1.0, 0.44], [F4, 11,  1.0, 0.44],
-    // ── Bar 4 (G) ──
-    [G4, 12,   1.0, 0.44], [A4, 13,  1.0, 0.44],
-    [B4, 14,   1.5, 0.50], [G4, 15.5,0.5, 0.40],
-    // ── Bar 5 (C) — 두 번째 프레이즈 시작 ──
-    [C5, 16,   1.0, 0.50], [B4, 17,  0.5, 0.43],
-    [A4, 17.5, 0.5, 0.42], [G4, 18,  1.0, 0.44],
-    [E4, 19,   1.0, 0.40],
-    // ── Bar 6 (Am) — 감정 고조 ──
-    [A4, 20,   1.5, 0.52], [G4, 21.5,0.5, 0.40],
-    [A4, 22,   1.0, 0.48], [E5, 23,  1.0, 0.58],   // ← 고조
-    // ── Bar 7 (F→G) — 클라이맥스 ──
-    [698.46, 24, 1.0, 0.62],  // F5 ← 최고조! (698.46Hz)
-    [E5,  25,    1.0, 0.54], [D5, 26, 1.0, 0.50],
-    [B4,  27,    1.0, 0.46],
-    // ── Bar 8 (C) — 잔잔한 해결 ──
-    [C5,  28,    1.0, 0.50], [G4, 29, 1.0, 0.44],
-    [E4,  30,    1.0, 0.40], [C4, 31, 2.5, 0.46],  // 긴 종지
+  // ── 멜로디 [주파수, 시작박, 길이박, 볼륨] ──
+  // G-Em-C-D 코드 진행, 밝고 따뜻한 선율
+  const MEL = [
+    // Bar 1 — G (가볍게 도입)
+    [D5, 0,   .75, .45], [B4, .75, .25, .38],
+    [G4, 1,   1.0, .44], [B4, 2,   .75, .44],
+    [D5, 2.75,.25, .40], [G4, 3,   1.0, .40],
+    // Bar 2 — Em (따뜻한 울림)
+    [E5, 4,  1.0,  .50], [D5, 5,  .5,  .42],
+    [C5, 5.5,.5,   .40], [B4, 6,  2.0, .48],
+    // Bar 3 — C (밝게 오름)
+    [C5, 8,  .75,  .46], [D5, 8.75,.25,.40],
+    [E5, 9,  1.0,  .50], [D5, 10, .5,  .44],
+    [C5, 10.5,.5,  .42], [B4, 11, 1.0, .44],
+    // Bar 4 — D (긴장감)
+    [A4, 12, 1.0,  .44], [F4s,13, .5,  .42],
+    [A4, 13.5,.5,  .42], [D5, 14, 2.0, .52],
+    // Bar 5 — G (고조)
+    [G4, 16, .5,   .44], [A4, 16.5,.5, .44],
+    [B4, 17, .5,   .48], [D5, 17.5,.5, .48],
+    [G5, 18, 1.0,  .58], [E5, 19, 1.0, .50], // 피크
+    // Bar 6 — Em (서정적)
+    [E5, 20, 1.0,  .52], [D5, 21, .5,  .44],
+    [C5, 21.5,.5,  .42], [B4, 22, .75, .46],
+    [A4, 22.75,.25,.38], [G4, 23, 1.0, .44],
+    // Bar 7 — C-D (해결 빌드업)
+    [C5, 24, .75,  .46], [B4, 24.75,.25,.40],
+    [A4, 25, .5,   .42], [B4, 25.5,.5, .44],
+    [C5, 26, .5,   .46], [D5, 26.5,.5, .48],
+    [E5, 27, 1.0,  .50],
+    // Bar 8 — G (평화로운 종지)
+    [D5, 28, .5,   .46], [B4, 28.5,.5, .44],
+    [G4, 29, 1.0,  .44], [B4, 30, 1.0, .40],
+    [G4, 31, 2.5,  .44], // 롱 홀드
   ];
-  // 루프 총 길이 = 33.5박
+  const LOOP = 33.5 * B;
 
-  // 베이스: 각 바에 코드 루트음 한 번 (사인파, 낮고 부드럽게)
-  const BASS = [
-    [C3, 0,  3.8, 0.18], [A3*0.5, 4,  3.8, 0.16],  // A2=110
-    [F3, 8,  3.8, 0.16], [G2,     12, 3.8, 0.16],
-    [C3, 16, 3.8, 0.18], [A3*0.5, 20, 3.8, 0.16],
-    [F3, 24, 3.8, 0.16], [G2,     28, 3.5, 0.14],
+  // ── 아르페지오 반주 [코드음배열, 시작박, 반복박수] ──
+  // 4분음표마다 코드 아르페지오 (업, ↑↑↓ 패턴)
+  const ARPS = [
+    // G 코드
+    [[G3,B3,D4,G4], 0,  4],
+    // Em
+    [[E3=164.81,G3,B3,E4=329.63], 4, 4],
+    // C
+    [[C4*.5,G3,C4,E4], 8, 4], // C3=130.81
+    // D
+    [[D3,F4s*.5,A3,D4], 12, 4], // F#3=185
+    // G
+    [[G3,B3,D4,G4], 16, 4],
+    // Em
+    [[164.81,G3,B3,329.63], 20, 4],
+    // C
+    [[130.81,G3,C4,E4], 24, 4],
+    // D
+    [[D3,184.99,A3,D4], 28, 3.5],
   ];
 
-  // 코드 패드: 4박마다 화음 (매우 조용한 사인파)
-  const PADS = [
-    [C4,0,4,.06],[E4,0,4,.05],[G4,0,4,.05],  // C
-    [A3,4,4,.06],[C4,4,4,.05],[E4,4,4,.05],  // Am
-    [F3,8,4,.06],[A3,8,4,.05],[C4,8,4,.05],  // F
-    [G3,12,4,.06],[B4*.5,12,4,.05],[D4,12,4,.05], // G (B3=246.94)
-    [C4,16,4,.06],[E4,16,4,.05],[G4,16,4,.05],
-    [A3,20,4,.06],[C4,20,4,.05],[E4,20,4,.05],
-    [F3,24,4,.06],[A3,24,4,.05],[C4,24,4,.05],
-    [G3,28,4,.06],[246.94*.5,28,4,.05],[D4,28,4,.04],
-  ];
-
-  const LOOP_SEC = 33.5 * B; // 루프 길이(초)
-
-  function pianoNote(freq, time, dur, vol) {
-    // 사인 + 삼각파 블렌드 → 피아노 음색
-    const o1 = ac.createOscillator(), o2 = ac.createOscillator();
-    const g  = ac.createGain(),       g2 = ac.createGain();
-    o1.type = 'sine';    o1.frequency.value = freq;
-    o2.type = 'triangle';o2.frequency.value = freq * 2;
-    g2.gain.value = 0.10;
-    o1.connect(g); o2.connect(g2); g2.connect(g);
+  function note(freq, time, dur, vol, type='sine') {
+    if (!freq || freq < 20) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    const o2 = ac.createOscillator(), g2 = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    o2.type = 'triangle'; o2.frequency.value = freq * 2; g2.gain.value = .08;
+    o.connect(g); o2.connect(g2); g2.connect(g);
     g.connect(master);
-    const v = vol;
+    const v = Math.min(vol, 0.9);
     g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(v, time + 0.025);       // 어택
-    g.gain.setValueAtTime(v * 0.62, time + Math.min(0.16, dur * 0.3)); // 디케이
-    g.gain.exponentialRampToValueAtTime(0.0001, time + dur); // 릴리즈
-    const end = time + dur + 0.06;
-    o1.start(time); o1.stop(end);
-    o2.start(time); o2.stop(end);
+    g.gain.linearRampToValueAtTime(v, time + .022);
+    g.gain.setValueAtTime(v * .6, time + Math.min(.14, dur*.3));
+    g.gain.exponentialRampToValueAtTime(.0001, time + dur);
+    const end = time + dur + .05;
+    o.start(time); o.stop(end); o2.start(time); o2.stop(end);
   }
 
-  function padNote(freq, time, dur, vol) {
+  function pad(freq, time, dur, vol) {
+    if (!freq || freq < 20) return;
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = 'sine'; o.frequency.value = freq;
     o.connect(g); g.connect(master);
     g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(vol, time + 0.5);
-    g.gain.setValueAtTime(vol, time + dur - 0.5);
+    g.gain.linearRampToValueAtTime(vol, time + .35);
+    g.gain.setValueAtTime(vol * .8, time + dur - .35);
     g.gain.linearRampToValueAtTime(0, time + dur);
-    o.start(time); o.stop(time + dur + 0.05);
+    o.start(time); o.stop(time + dur + .05);
   }
 
-  function schedule(startTime) {
-    MELODY.forEach(([f,sb,db,v]) => pianoNote(f, startTime + sb*B, db*B, v));
-    BASS.forEach(  ([f,sb,db,v]) => padNote  (f, startTime + sb*B, db*B, v));
-    PADS.forEach(  ([f,sb,db,v]) => padNote  (f, startTime + sb*B, db*B, v));
+  function schedule(t0) {
+    // 멜로디
+    MEL.forEach(([f,sb,db,v]) => note(f, t0+sb*B, db*B, v));
+    // 아르페지오 반주
+    ARPS.forEach(([chord, sb, beats]) => {
+      const n = chord.length;
+      for (let b = 0; b < beats; b++) {
+        const t = t0 + (sb + b) * B;
+        // 4음 아르페지오: 1-2-3-4 pattern, 16분음표
+        chord.forEach((f, i) => pad(f, t + i*(B/4), B/4+.05, i===0?.10:.06));
+      }
+    });
+    // 베이스 (루트음, 낮고 부드럽게)
+    [[G2,0,3.8,.14],[G2*.75,4,3.8,.12],[130.81*.5,8,3.8,.12],[D3*.5,12,3.8,.12],
+     [G2,16,3.8,.14],[G2*.75,20,3.8,.12],[130.81*.5,24,3.8,.12],[D3*.5,28,3.5,.10]
+    ].forEach(([f,sb,db,v]) => pad(f, t0+sb*B, db*B, v));
   }
 
   return {
@@ -271,41 +283,32 @@ const BGM = (() => {
       try {
         ac = new AC();
         if (ac.state === 'suspended') ac.resume();
-
-        // ── 신호 체인: master → dry(0.7) → destination
-        //                      → delay → lpf → fb → delay(loop) → wet(0.3) → destination
         master = ac.createGain();
         master.gain.setValueAtTime(0, ac.currentTime);
-        master.gain.linearRampToValueAtTime(0.65, ac.currentTime + 3); // 3초 페이드인
+        master.gain.linearRampToValueAtTime(.55, ac.currentTime + 2.5); // 부드러운 페이드인
 
-        const dry  = ac.createGain(); dry.gain.value = 0.70;
-        const delay = ac.createDelay(0.8); delay.delayTime.value = 0.30;
-        const fb    = ac.createGain(); fb.gain.value = 0.38;
-        const lpf   = ac.createBiquadFilter();
-        lpf.type = 'lowpass'; lpf.frequency.value = 2200;
-        const wet  = ac.createGain(); wet.gain.value = 0.32;
-
-        master.connect(dry);        dry.connect(ac.destination);
-        master.connect(delay);
-        delay.connect(lpf); lpf.connect(fb); fb.connect(delay); // 피드백 루프
-        delay.connect(wet); wet.connect(ac.destination);        // 웻 출력
+        // 가벼운 리버브 (딜레이 짧게, 피드백 낮게)
+        const dry = ac.createGain(); dry.gain.value = .72;
+        const dly = ac.createDelay(.6); dly.delayTime.value = .18;
+        const fb  = ac.createGain(); fb.gain.value = .28;
+        const lpf = ac.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=3200;
+        const wet = ac.createGain(); wet.gain.value = .28;
+        master.connect(dry); dry.connect(ac.destination);
+        master.connect(dly); dly.connect(lpf); lpf.connect(fb); fb.connect(dly);
+        dly.connect(wet); wet.connect(ac.destination);
 
         on = true;
-        schedule(ac.currentTime + 0.15);
-
-        // 루프 스케줄러
+        schedule(ac.currentTime + .1);
         function loop() {
           if (!on || !ac) return;
-          schedule(ac.currentTime + 0.5);
-          loopTimer = setTimeout(loop, LOOP_SEC * 1000);
+          schedule(ac.currentTime + .4);
+          loopTimer = setTimeout(loop, LOOP * 1000);
         }
-        loopTimer = setTimeout(loop, LOOP_SEC * 1000);
-      } catch(e) { console.warn('BGM start:', e); }
+        loopTimer = setTimeout(loop, LOOP * 1000);
+      } catch(e) { console.warn('BGM:', e); }
     },
-
-    fadeOut(dur = 2.5) {
-      on = false;
-      clearTimeout(loopTimer);
+    fadeOut(dur=2.5) {
+      on = false; clearTimeout(loopTimer);
       if (!master || !ac) return;
       try {
         const now = ac.currentTime;
@@ -315,8 +318,7 @@ const BGM = (() => {
       } catch(e) {}
       setTimeout(() => { try { ac.close(); } catch(e) {} ac=null; master=null; }, (dur+.3)*1000);
     },
-
-    restart() { this.fadeOut(0.1); setTimeout(() => this.start(), 300); }
+    restart() { this.fadeOut(.1); setTimeout(() => this.start(), 250); }
   };
 })();
 
