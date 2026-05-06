@@ -176,6 +176,7 @@ const BGM = (() => {
      decodeAudioData()는 ArrayBuffer를 소비(detach)하므로
      renderBGM 호출마다 .slice(0)으로 복제해서 사용한다 */
   let bgmArrayBuffer = null;
+  let bgmDecoded     = null; // 디코딩된 AudioBuffer 캐시 (재시도 안정성 + 속도)
   fetch(BGM_SRC)
     .then(r => r.arrayBuffer())
     .then(ab => { bgmArrayBuffer = ab; })
@@ -239,22 +240,26 @@ const BGM = (() => {
 
     /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
     async renderBGM(duration, sampleRate) {
-      // 사전 로딩 실패 시 재시도
-      if (!bgmArrayBuffer) {
-        const res = await fetch(BGM_SRC);
-        bgmArrayBuffer = await res.arrayBuffer();
+      // 디코딩 결과 캐시가 없으면 처음 한 번만 디코딩
+      if (!bgmDecoded) {
+        if (!bgmArrayBuffer) {
+          const res = await fetch(BGM_SRC);
+          bgmArrayBuffer = await res.arrayBuffer();
+        }
+
+        // ⚠️ iOS Safari는 OfflineAudioContext.decodeAudioData() 미지원
+        //     반드시 일반 AudioContext로 디코딩해야 함
+        // ※ decodeAudioData는 ArrayBuffer를 detach하므로 .slice(0)으로 복제
+        const AC     = window.AudioContext || window.webkitAudioContext;
+        const tmpCtx = new AC();
+        bgmDecoded   = await tmpCtx.decodeAudioData(bgmArrayBuffer.slice(0));
+        await tmpCtx.close();
       }
 
       const sr  = sampleRate || 44100;
       const oac = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
-
-      // OfflineAudioContext로 직접 디코딩 ─ 별도 온라인 AudioContext 생성 불필요
-      // (모바일에서 AudioContext 동시 생성 수 제한 문제 방지)
-      // ※ decodeAudioData는 ArrayBuffer를 detach하므로 반드시 .slice(0)으로 복제
-      const bgmBuf = await oac.decodeAudioData(bgmArrayBuffer.slice(0));
-
       const src = oac.createBufferSource();
-      src.buffer = bgmBuf;
+      src.buffer = bgmDecoded;  // 캐시된 AudioBuffer 사용 (BufferSource가 샘플레이트 자동 변환)
       src.loop   = true;
       const gain = oac.createGain();
       gain.gain.value = TARGET_VOL;
