@@ -291,7 +291,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       students   = data.students || [];
       document.getElementById('loadingRow').style.display    = 'none';
       document.getElementById('resultSection').style.display = 'block';
-      document.getElementById('statCount').textContent  = students.length;
+      document.getElementById('statCount').textContent  = students.length + '명';
       document.getElementById('statSchool').textContent = school;
       renderGrid();
     } catch {
@@ -334,7 +334,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       if (data.success) {
         document.getElementById('qc-'+idx).remove();
         students = students.filter((_,i) => i !== idx);
-        document.getElementById('statCount').textContent = students.length;
+        document.getElementById('statCount').textContent = students.length + '명';
         if (!students.length) document.getElementById('qrGrid').innerHTML = '<div class="empty">녹음된 학생이 없습니다</div>';
       } else {
         alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
@@ -379,7 +379,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         const safeSc = p.school.replace(/'/g,"\\'");
         const badge  = getPeriodBadge(p.startDate, p.endDate);
         const dateStr = (p.startDate || p.endDate)
-          ? `<span>${p.startDate||'?'} ~ ${p.endDate||'?'}</span> ${badge}`
+          ? `<span>${fmtDate(p.startDate)}~${fmtDate(p.endDate)}</span> ${badge}`
           : '<span style="color:var(--faint)">기간 없음 (항상 허용)</span>';
         return `
         <div class="pw-row" id="pwrow-${encSc}">
@@ -421,6 +421,24 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     } catch {
       document.getElementById('pwList').innerHTML = '<div class="pw-empty">불러오기 실패</div>';
     }
+  }
+
+  // "Thu May 07 2026..." 같은 긴 날짜 문자열을 "2026-05-07" 형식으로 변환
+  function fmtDate(s) {
+    if (!s) return '?';
+    // 이미 YYYY-MM-DD 형식이면 그대로
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(s).trim())) return String(s).trim();
+    // Date 객체 문자열이면 파싱
+    try {
+      const d = new Date(s);
+      if (!isNaN(d)) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const dy = String(d.getDate()).padStart(2,'0');
+        return y+'-'+m+'-'+dy;
+      }
+    } catch(e) {}
+    return String(s).substring(0,10);
   }
 
   function getPeriodBadge(startDate, endDate) {
