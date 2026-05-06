@@ -44,7 +44,7 @@ input::placeholder{color:var(--faint)}
 .login-btn .ls{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 .login-btn.loading .ls{display:block}
 .login-btn.loading .ll{opacity:.7}
-.err-txt{color:var(--red);font-size:12.5px;text-align:center;min-height:18px;margin-top:.625rem}
+.err-txt{color:var(--red);font-size:12.5px;text-align:center;min-height:18px;margin-top:.625rem;white-space:pre-line}
 .err-txt.shake{animation:shake .35s ease}
 
 /* ── 대시보드 ── */
@@ -228,7 +228,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         $('dashSchool').textContent = school;
         loadStudents();
       } else {
-        showErr('비밀번호가 틀렸습니다. 선생님 비밀번호를 확인해 주세요.');
+        showErr(data.error || '비밀번호가 틀렸습니다. 선생님 비밀번호를 확인해 주세요.');
       }
     } catch {
       showErr('확인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
