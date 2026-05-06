@@ -305,13 +305,14 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       return;
     }
     $('studentList').innerHTML = filtered.map((s, i) => {
-      const initials = (s.name || '?').slice(-1);
+      const initials  = (s.name || '?')[0];
+      const banColor  = getBanColor(s.className);
       const dateStr  = formatDate(s.timestamp);
       const safeId   = 'row-' + encodeURIComponent(s.fileId);
       return `
       <div class="s-row" id="${safeId}">
         <div class="s-top" onclick="toggleRow('${s.fileId}')">
-          <div class="s-avatar">${initials}</div>
+          <div class="s-avatar" style="background:${banColor.bg};color:${banColor.fg}">${initials}</div>
           <div class="s-info">
             <div class="s-name">${s.name}</div>
             <div class="s-cls">${s.className}</div>
@@ -389,7 +390,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     $('ml-' + fileId).style.display = 'block';
     $('pc-' + fileId).style.display = 'none';
     try {
-      const res  = await fetch(GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId));
+      const res  = await fetch(GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId));
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || '로드 실패');
       const binary = atob(data.b64);
@@ -477,6 +478,23 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
 
   function updateMiniSeek(el, pct) {
     el.style.background = `linear-gradient(to right,var(--primary) ${pct}%,var(--border-l) ${pct}%)`;
+  }
+
+  /* ── 반번호별 아바타 색상 팔레트 ── */
+  const BAN_PALETTE = [
+    {bg:'#EBF3FE',fg:'#3182F6'}, // 1반 — 파랑
+    {bg:'#F0FAF4',fg:'#2BA25B'}, // 2반 — 초록
+    {bg:'#FFF7ED',fg:'#E07C2A'}, // 3반 — 주황
+    {bg:'#F5F0FF',fg:'#7C3AED'}, // 4반 — 보라
+    {bg:'#FFF2F3',fg:'#F04452'}, // 5반 — 빨강
+    {bg:'#E6FBF5',fg:'#0B9E77'}, // 6반 — 민트
+    {bg:'#FFF9E6',fg:'#D97706'}, // 7반 — 노랑
+    {bg:'#EDE9FE',fg:'#6D28D9'}, // 8반 — 남보라
+  ];
+  function getBanColor(className) {
+    const m = (className || '').match(/(\d+)반/);
+    const n = m ? parseInt(m[1]) - 1 : 0;
+    return BAN_PALETTE[n % BAN_PALETTE.length];
   }
 
   function fmtSec(s) {
