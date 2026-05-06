@@ -322,7 +322,63 @@ const BGM = (() => {
       } catch(e) {}
       setTimeout(() => { try { ac.close(); } catch(e) {} ac=null; master=null; }, (dur+.3)*1000);
     },
-    restart() { this.fadeOut(.1); setTimeout(() => this.start(), 250); }
+    restart() { this.fadeOut(.1); setTimeout(() => this.start(), 250); },
+
+    /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
+    async renderBGM(duration, sampleRate) {
+      const sr  = sampleRate || 44100;
+      const oac = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
+
+      const lmaster = oac.createGain(); lmaster.gain.value = .55;
+      const ldry = oac.createGain(); ldry.gain.value = .72;
+      const ldly = oac.createDelay(.6); ldly.delayTime.value = .18;
+      const lfb  = oac.createGain(); lfb.gain.value = .28;
+      const llpf = oac.createBiquadFilter(); llpf.type='lowpass'; llpf.frequency.value=3200;
+      const lwet = oac.createGain(); lwet.gain.value = .28;
+      lmaster.connect(ldry); ldry.connect(oac.destination);
+      lmaster.connect(ldly); ldly.connect(llpf); llpf.connect(lfb); lfb.connect(ldly);
+      ldly.connect(lwet); lwet.connect(oac.destination);
+
+      function lnote(freq, time, dur, vol, type='sine') {
+        if (!freq || freq < 20) return;
+        const o=oac.createOscillator(), g=oac.createGain();
+        const o2=oac.createOscillator(), g2=oac.createGain();
+        o.type=type; o.frequency.value=freq;
+        o2.type='triangle'; o2.frequency.value=freq*2; g2.gain.value=.08;
+        o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lmaster);
+        const v=Math.min(vol,.9);
+        g.gain.setValueAtTime(0,time);
+        g.gain.linearRampToValueAtTime(v,time+.022);
+        g.gain.setValueAtTime(v*.6,time+Math.min(.14,dur*.3));
+        g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+        const end=time+dur+.05; o.start(time); o.stop(end); o2.start(time); o2.stop(end);
+      }
+      function lpad(freq, time, dur, vol) {
+        if (!freq || freq < 20) return;
+        const o=oac.createOscillator(), g=oac.createGain();
+        o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(lmaster);
+        g.gain.setValueAtTime(0,time);
+        g.gain.linearRampToValueAtTime(vol,time+.35);
+        g.gain.setValueAtTime(vol*.8,time+dur-.35);
+        g.gain.linearRampToValueAtTime(0,time+dur);
+        o.start(time); o.stop(time+dur+.05);
+      }
+      function lschedule(t0) {
+        MEL.forEach(([f,sb,db,v]) => lnote(f, t0+sb*B, db*B, v));
+        ARPS.forEach(([chord, sb, beats]) => {
+          for (let b=0; b<beats; b++) {
+            const t=t0+(sb+b)*B;
+            chord.forEach((f,i) => lpad(f, t+i*(B/4), B/4+.05, i===0?.10:.06));
+          }
+        });
+        [[G2,0,3.8,.14],[G2*.75,4,3.8,.12],[130.81*.5,8,3.8,.12],[D3*.5,12,3.8,.12],
+         [G2,16,3.8,.14],[G2*.75,20,3.8,.12],[130.81*.5,24,3.8,.12],[D3*.5,28,3.5,.10]
+        ].forEach(([f,sb,db,v]) => lpad(f, t0+sb*B, db*B, v));
+      }
+      let t = .1;
+      while (t < duration + 2) { lschedule(t); t += LOOP; }
+      return oac.startRendering();
+    }
   };
 })();
 
@@ -593,16 +649,15 @@ function replayAudio() {
 
 /* ══════════════════════════════════════
    MP3 다운로드
-   iOS  → Web Share API
-   기타 → blob anchor (Android 수정)
+   iOS / Android → Web Share API (카카오·문자 등 공유 가능)
+   기타           → blob anchor 직접 다운로드
 ══════════════════════════════════════ */
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 async function downloadMp3() {
   saveBtn.disabled = true;
   saveBtn.classList.add('converting');
   try {
-    /* rawBlob 없으면 audioBin으로 받아오기 (Drive URL 재생 모드인 경우) */
+    /* rawBlob 없으면 audioBin으로 받아오기 */
     if (!rawBlob) {
       saveBtn.querySelector('.bt').textContent = '불러오는 중…';
       const r = await fetch(GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId));
@@ -613,21 +668,22 @@ async function downloadMp3() {
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       rawBlob = new Blob([bytes], { type: d.mime || 'audio/webm' });
     }
-    saveBtn.querySelector('.bt').textContent = '변환 중…';
-    const mp3Blob  = await convertToMp3(rawBlob);
+    saveBtn.querySelector('.bt').textContent = 'BGM 합성 중…';
+    const mp3Blob  = await mixAndConvertToMp3(rawBlob);
     const filename = (verifiedName || '학생') + '_졸업메시지.mp3';
 
-    if (isIOS && navigator.share) {
+    /* ── iOS · Android: Web Share API (카카오톡·문자 등 공유 가능) ── */
+    if (navigator.share) {
       try {
         const file = new File([mp3Blob], filename, { type:'audio/mpeg' });
         if (navigator.canShare && navigator.canShare({ files:[file] })) {
           await navigator.share({ files:[file], title:filename });
           return;
         }
-      } catch(e) { /* share 실패시 anchor로 낙하 */ }
+      } catch(e) { /* 공유 취소 또는 미지원 → anchor로 낙하 */ }
     }
 
-    // Android / PC: anchor 직접 다운로드
+    /* ── PC / 공유 미지원 환경: 직접 다운로드 ── */
     const url = URL.createObjectURL(mp3Blob);
     const a   = document.createElement('a');
     a.href = url; a.download = filename; a.style.display = 'none';
@@ -643,30 +699,52 @@ async function downloadMp3() {
   }
 }
 
-async function convertToMp3(blob) {
+/* ── 음성 + BGM 합성 후 MP3 인코딩 ── */
+async function mixAndConvertToMp3(blob) {
   const arrayBuffer = await blob.arrayBuffer();
   const AudioCtx    = window.AudioContext || window.webkitAudioContext;
   const ctx         = new AudioCtx();
-  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  const voiceBuffer = await ctx.decodeAudioData(arrayBuffer);
   ctx.close();
-  const channels = Math.min(audioBuffer.numberOfChannels, 2);
-  const encoder  = new lamejs.Mp3Encoder(channels, audioBuffer.sampleRate, 128);
-  const toI16 = f32 => {
+
+  const duration   = voiceBuffer.duration;
+  const sampleRate = voiceBuffer.sampleRate;
+
+  /* BGM 오프라인 렌더링 */
+  const bgmBuffer = await BGM.renderBGM(duration, sampleRate);
+
+  /* 채널 데이터 추출 */
+  const voiceL = voiceBuffer.getChannelData(0);
+  const voiceR = voiceBuffer.numberOfChannels > 1 ? voiceBuffer.getChannelData(1) : voiceL;
+  const bgmL   = bgmBuffer.numberOfChannels > 0 ? bgmBuffer.getChannelData(0) : new Float32Array(voiceBuffer.length);
+  const bgmR   = bgmBuffer.numberOfChannels > 1 ? bgmBuffer.getChannelData(1) : bgmL;
+
+  /* 믹싱: 음성 100% + BGM 35% (클리핑 방지) */
+  const len    = voiceBuffer.length;
+  const mixedL = new Float32Array(len);
+  const mixedR = new Float32Array(len);
+  const BGM_GAIN = .35;
+  for (let i = 0; i < len; i++) {
+    mixedL[i] = Math.max(-1, Math.min(1, voiceL[i] + (bgmL[i] || 0) * BGM_GAIN));
+    mixedR[i] = Math.max(-1, Math.min(1, voiceR[i] + (bgmR[i] || 0) * BGM_GAIN));
+  }
+
+  /* MP3 인코딩 (stereo 128kbps) */
+  const encoder = new lamejs.Mp3Encoder(2, sampleRate, 128);
+  const toI16   = f32 => {
     const i16 = new Int16Array(f32.length);
     for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i]*32767)));
     return i16;
   };
-  const lI16 = toI16(audioBuffer.getChannelData(0));
-  const rI16 = channels > 1 ? toI16(audioBuffer.getChannelData(1)) : lI16;
-  const parts=[], BLOCK=1152;
-  for (let i=0; i<lI16.length; i+=BLOCK) {
-    const buf = channels>1
-      ? encoder.encodeBuffer(lI16.subarray(i,i+BLOCK), rI16.subarray(i,i+BLOCK))
-      : encoder.encodeBuffer(lI16.subarray(i,i+BLOCK));
-    if (buf.length>0) parts.push(new Uint8Array(buf));
+  const lI16 = toI16(mixedL);
+  const rI16 = toI16(mixedR);
+  const parts = [], BLOCK = 1152;
+  for (let i = 0; i < lI16.length; i += BLOCK) {
+    const buf = encoder.encodeBuffer(lI16.subarray(i,i+BLOCK), rI16.subarray(i,i+BLOCK));
+    if (buf.length > 0) parts.push(new Uint8Array(buf));
   }
   const flush = encoder.flush();
-  if (flush.length>0) parts.push(new Uint8Array(flush));
+  if (flush.length > 0) parts.push(new Uint8Array(flush));
   return new Blob(parts, { type:'audio/mpeg' });
 }
 </script>
