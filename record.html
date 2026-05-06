@@ -242,7 +242,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
       const res  = await fetch(GAS_URL+'?action=checkPassword&school='+encodeURIComponent(SCHOOL)+'&pw='+encodeURIComponent(pw));
       const data = await res.json();
       if (data.ok) enterRecordScreen();
-      else showPwError('비밀번호가 틀렸습니다. 선생님께 확인해 주세요.');
+      else showPwError(data.error || '비밀번호가 틀렸습니다. 선생님께 확인해 주세요.');
     } catch { showPwError('확인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'); }
     finally { btn.disabled=false; btn.classList.remove('loading'); }
   }
