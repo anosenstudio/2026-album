@@ -11,10 +11,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F7F8FA; --card:#FFFFFF; --primary:#3182F6; --pri-lt:#5B9DF8; --pri-bg:#EBF3FE;
-  --border:#E5E8EB; --text:#191919; --sub:#4E4E4E; --muted:#8B95A1; --faint:#C6CAD0;
-  --input-bg:#F2F4F6; --red:#F04452; --red-bg:#FFF2F3; --red-bd:#FDDDDD;
-  --green:#2BA25B; --green-bg:#F0FAF4; --green-bd:#B5DFC4;
+  --bg:#F7F8FA;--card:#fff;--primary:#3182F6;--pri-lt:#5B9DF8;--pri-bg:#EBF3FE;
+  --border:#E5E8EB;--text:#191919;--sub:#4E4E4E;--muted:#8B95A1;--faint:#C6CAD0;
+  --input-bg:#F2F4F6;--red:#F04452;--red-bg:#FFF2F3;--red-bd:#FDDDDD;
+  --green:#2BA25B;--green-bg:#F0FAF4;--green-bd:#B5DFC4;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
 }
 body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);padding:2.5rem 1.25rem 4rem}
@@ -24,7 +24,7 @@ body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif
 .page{max-width:900px;margin:0 auto;animation:up .5s cubic-bezier(.22,1,.36,1) both}
 .top-header{margin-bottom:2rem}
 .studio-tag{font-size:11px;font-weight:600;color:var(--primary);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:.5rem}
-.page-title{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.5px;margin-bottom:.25rem}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:.25rem}
 .page-desc{font-size:14px;color:var(--muted);font-weight:300}
 
 /* 탭 */
@@ -33,17 +33,19 @@ body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif
 .tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .tab-content{display:none}
 .tab-content.active{display:block;animation:fadeIn .3s ease both}
-
 .card{background:var(--card);border-radius:16px;padding:1.5rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
 .card-title{font-size:13px;font-weight:600;color:var(--sub);margin-bottom:1.125rem}
 .field{margin-bottom:.875rem}
 .field:last-of-type{margin-bottom:0}
 .lbl{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:.4rem}
 input,select{width:100%;padding:12px 14px;background:var(--input-bg);border:1.5px solid transparent;border-radius:10px;color:var(--text);font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .18s,background .18s}
+input[type="date"]{cursor:pointer}
 input:focus,select:focus{background:var(--card);border-color:var(--pri-lt)}
 input::placeholder{color:var(--faint)}
 select{cursor:pointer;appearance:none;-webkit-appearance:none}
-select option{background:var(--card)}
+.date-row{display:flex;gap:8px;align-items:center}
+.date-row input{flex:1}
+.date-sep{font-size:13px;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem}
 .btn{padding:11px 20px;border-radius:10px;border:none;font-size:13px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s,transform .1s}
 .btn:active{transform:scale(.97)}
@@ -57,26 +59,39 @@ select option{background:var(--card)}
 .alert.ok {background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
 
 /* 비밀번호 목록 */
-.pw-list{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
-.pw-row{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:.75rem 1rem;flex-wrap:wrap}
-.pw-school{flex:1;font-size:14px;font-weight:600;color:var(--text);min-width:80px}
-.pw-value{font-size:13px;color:var(--muted);font-family:monospace;letter-spacing:1px}
-/* 다운로드 토글 버튼 */
-.dl-toggle{flex-shrink:0;padding:7px 11px;border-radius:8px;border:none;font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s,opacity .15s;white-space:nowrap}
+.pw-list{display:flex;flex-direction:column;gap:10px;margin-top:1rem}
+.pw-row{background:var(--bg);border-radius:12px;padding:.875rem 1rem;border:1px solid var(--border)}
+.pw-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.625rem}
+.pw-school{flex:1;font-size:14px;font-weight:700;color:var(--text);min-width:80px}
+.pw-value{font-size:12.5px;color:var(--muted);font-family:monospace;letter-spacing:1px;background:var(--card);border-radius:6px;padding:3px 8px}
+.pw-dates{font-size:11.5px;color:var(--muted);margin-bottom:.5rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pd-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:600}
+.pd-badge.active  {background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.pd-badge.upcoming{background:var(--pri-bg);color:var(--primary);border:1px solid rgba(49,130,246,.25)}
+.pd-badge.ended   {background:var(--input-bg);color:var(--muted);border:1px solid var(--border)}
+.pd-badge.none    {background:#FFF7F0;color:#E07C2A;border:1px solid #F8DBBE}
+.pw-actions{display:flex;gap:6px;flex-wrap:wrap}
+.dl-toggle{padding:7px 11px;border-radius:8px;border:none;font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
 .dl-toggle.on {background:var(--green-bg);color:var(--green)}
 .dl-toggle.on:hover{background:#E4F5EC}
 .dl-toggle.off{background:var(--red-bg);color:var(--red)}
 .dl-toggle.off:hover{background:#FFE5E7}
 .dl-toggle:disabled{opacity:.4;cursor:not-allowed}
-.pw-del{flex-shrink:0;padding:7px 14px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:12px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
+.share-btn{padding:7px 11px;border-radius:8px;border:none;background:#FEE500;color:#3A1D1D;font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.share-btn:hover{background:#FFD700}
+.share-btn.done{background:var(--green-bg);color:var(--green)}
+.copy-btn{padding:7px 11px;border-radius:8px;border:none;background:var(--input-bg);color:var(--sub);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
+.copy-btn:hover{background:#E9EAEC}
+.copy-btn.done{background:var(--green-bg);color:var(--green)}
+.pw-del{padding:7px 11px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
 .pw-del:hover{background:#E9EAEC}
 .pw-del:disabled{opacity:.5;cursor:not-allowed}
 .pw-empty{text-align:center;padding:2rem;color:var(--muted);font-size:14px}
 
-/* 통계 / QR */
+/* QR 그리드 */
 .stats{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
 .stat{background:var(--card);border-radius:14px;padding:1rem 1.25rem;box-shadow:var(--shadow);min-width:130px}
-.stat-val{font-size:26px;font-weight:700;color:var(--text);margin-bottom:2px;letter-spacing:-.5px}
+.stat-val{font-size:26px;font-weight:700;margin-bottom:2px;letter-spacing:-.5px}
 .stat-val.blue{color:var(--primary)}
 .stat-lbl{font-size:11px;color:var(--muted)}
 .action-bar{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
@@ -85,8 +100,11 @@ select option{background:var(--card)}
 .qr-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.09)}
 .qr-box{background:#fff;border-radius:6px;padding:5px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.625rem;border:1px solid var(--border)}
 .qr-box img,.qr-box canvas{width:128px!important;height:128px!important;display:block}
-.qr-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
-.qr-cls{font-size:11px;color:var(--muted)}
+.qr-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.qr-cls{font-size:11px;color:var(--muted);margin-bottom:.5rem}
+.qr-del{width:100%;padding:7px 0;border-radius:8px;border:none;background:var(--red-bg);color:var(--red);font-size:11px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
+.qr-del:hover{background:#FFE5E7}
+.qr-del:disabled{opacity:.4;cursor:not-allowed}
 .empty{grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);font-size:14px}
 .loading-row{display:none;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:.75rem}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--faint);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
@@ -98,7 +116,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
   <div class="top-header">
     <div class="studio-tag">늘스튜디오</div>
     <div class="page-title">관리자</div>
-    <div class="page-desc">QR 생성 · 비밀번호 관리</div>
+    <div class="page-desc">QR 생성 · 비밀번호 · 기간 관리</div>
   </div>
 
   <div class="tabs">
@@ -107,18 +125,14 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     <button class="tab"        onclick="switchTab('settings')">⚙️ 설정</button>
   </div>
 
-  <!-- QR 탭 -->
+  <!-- ── QR 탭 ── -->
   <div class="tab-content active" id="tab-qr">
     <div class="card">
       <div class="card-title">학교 선택</div>
-      <div class="field" style="margin-bottom:0">
-        <select id="schoolSelect" onchange="loadStudents()">
-          <option value="">— 학교를 선택하세요 —</option>
-        </select>
-      </div>
-      <div class="loading-row" id="loadingRow">
-        <span class="spinner"></span> 불러오는 중…
-      </div>
+      <select id="schoolSelect" onchange="loadStudents()">
+        <option value="">— 학교를 선택하세요 —</option>
+      </select>
+      <div class="loading-row" id="loadingRow"><span class="spinner"></span> 불러오는 중…</div>
     </div>
     <div id="resultSection" style="display:none;animation:fadeIn .4s ease both">
       <div class="stats">
@@ -127,36 +141,46 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       </div>
       <div class="action-bar">
         <button class="btn btn-primary" id="dlBtn" onclick="downloadZip()">ZIP 다운로드</button>
-        <button class="btn btn-ghost"   onclick="loadStudents()">새로고침</button>
+        <button class="btn btn-ghost" onclick="loadStudents()">새로고침</button>
       </div>
       <div class="qr-grid" id="qrGrid"></div>
     </div>
   </div>
 
-  <!-- 비밀번호 탭 -->
+  <!-- ── 비밀번호 관리 탭 ── -->
   <div class="tab-content" id="tab-pw">
     <div class="card">
-      <div class="card-title">학교별 비밀번호 설정</div>
+      <div class="card-title">학교 설정 (비밀번호 + 녹음 기간)</div>
       <div class="field">
         <label class="lbl">학교 이름</label>
         <input id="pwSchool" type="text" placeholder="예: ○○초등학교" />
       </div>
       <div class="field">
         <label class="lbl">비밀번호</label>
-        <input id="pwValue" type="text" placeholder="예: 2026neul (영문+숫자 조합 권장)" />
+        <input id="pwValue" type="text" placeholder="예: 2026neul" />
+      </div>
+      <div class="field">
+        <label class="lbl">녹음 시작일 (선택)</label>
+        <input id="pwStart" type="date" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="lbl">녹음 종료일 (선택)</label>
+        <input id="pwEnd" type="date" />
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="savePassword()">저장</button>
+        <button class="btn btn-ghost"   onclick="clearPwForm()">초기화</button>
       </div>
       <div class="alert err" id="pwErr"></div>
       <div class="alert ok"  id="pwOk"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">설정된 비밀번호 목록</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;line-height:1.8">
-        <strong style="color:var(--green)">⬇ 다운 ON</strong> — 학생이 MP3 저장 가능 &nbsp;·&nbsp;
-        <strong style="color:var(--red)">⬇ 다운 OFF</strong> — 저장 버튼 숨김
+      <div class="card-title">설정된 학교 목록</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:.75rem">
+        <strong style="color:var(--green)">⬇ 다운 ON</strong> = MP3 저장 허용 &nbsp;·&nbsp;
+        <strong style="color:var(--red)">⬇ 다운 OFF</strong> = 저장 버튼 숨김<br>
+        <strong>📋 복사</strong> / <strong style="color:#9A7000">💬 카톡</strong> 버튼으로 학부모·학생에게 링크 공유
       </p>
       <div class="pw-list" id="pwList"><div class="pw-empty">불러오는 중…</div></div>
       <div class="btn-row" style="margin-top:1rem">
@@ -167,17 +191,17 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     </div>
 
     <div class="card" style="background:var(--pri-bg);border:1.5px solid rgba(49,130,246,.2)">
-      <div class="card-title" style="color:var(--primary)">💡 운영 방법</div>
+      <div class="card-title" style="color:var(--primary)">💡 운영 안내</div>
       <p style="font-size:13px;color:var(--sub);line-height:2">
-        선생님이 반 전체에 비밀번호 하나를 알려주세요.<br>
-        학생들은 비밀번호 입력 후 녹음 화면으로 진입해요.<br>
-        같은 이름+반+번호로는 <strong>1회만 제출</strong>할 수 있어요.<br>
-        <strong>⬇ 다운 토글</strong>로 학교별 MP3 저장 기능을 켜고 끌 수 있어요.
+        비밀번호를 설정하면 학생은 비밀번호 입력 후 녹음 화면으로 진입해요.<br>
+        기간을 설정하면 해당 기간에만 녹음이 가능해요.<br>
+        기간을 비워두면 언제든 녹음할 수 있어요.<br>
+        같은 이름+반+번호로는 <strong>1회만 제출</strong>할 수 있어요.
       </p>
     </div>
   </div>
 
-  <!-- 설정 탭 -->
+  <!-- ── 설정 탭 ── -->
   <div class="tab-content" id="tab-settings">
     <div class="card">
       <div class="card-title">연결 설정</div>
@@ -203,7 +227,6 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
 
 <script>
   let students = [];
-
   const DEFAULT_GAS   = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
   const DEFAULT_PAGES = 'https://mytimenote.github.io/2026';
 
@@ -215,10 +238,11 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
   };
 
   function switchTab(name) {
-    document.querySelectorAll('.tab').forEach((t,i) =>
-      t.classList.toggle('active', ['qr','pw','settings'][i] === name));
+    ['qr','pw','settings'].forEach((n,i) => {
+      document.querySelectorAll('.tab')[i].classList.toggle('active', n === name);
+    });
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById('tab-'+name).classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
   }
 
   function saveSettings() {
@@ -228,24 +252,24 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     loadSchools();
   }
 
-  function getGasUrl()   { return document.getElementById('gasUrl').value.trim(); }
-  function getPagesUrl() { return document.getElementById('pagesUrl').value.trim().replace(/\/$/,''); }
-  function makeUrl(s)    { return getPagesUrl() + '/play.html?f=' + encodeURIComponent(s.fileId); }
+  const getGasUrl   = () => document.getElementById('gasUrl').value.trim();
+  const getPagesUrl = () => document.getElementById('pagesUrl').value.trim().replace(/\/$/,'');
+  const makePlayUrl = s => getPagesUrl() + '/play.html?f=' + encodeURIComponent(s.fileId);
 
+  /* ── 학교 목록 ── */
   async function loadSchools() {
     try {
       const res  = await fetch(getGasUrl() + '?action=schools');
       const data = await res.json();
       const sel  = document.getElementById('schoolSelect');
       sel.innerHTML = '<option value="">— 학교를 선택하세요 —</option>' +
-        data.schools.map(s => `<option value="${s}">${s}</option>`).join('');
+        (data.schools || []).map(s => `<option value="${s}">${s}</option>`).join('');
       document.getElementById('settingsErr').style.display = 'none';
       showMsg('settingsOk','✓ 연결 성공');
-    } catch {
-      showMsg('settingsErr','연결 실패 — GAS URL을 확인하세요.');
-    }
+    } catch { showMsg('settingsErr','연결 실패 — GAS URL을 확인하세요.'); }
   }
 
+  /* ── 학생 목록 + QR ── */
   async function loadStudents() {
     const school = document.getElementById('schoolSelect').value;
     if (!school) return;
@@ -262,7 +286,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       renderGrid();
     } catch {
       document.getElementById('loadingRow').style.display = 'none';
-      alert('학생 목록을 불러오는 데 실패했습니다.');
+      alert('학생 목록을 불러오지 못했습니다.');
     }
   }
 
@@ -270,18 +294,46 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     const grid = document.getElementById('qrGrid');
     if (!students.length) { grid.innerHTML = '<div class="empty">녹음된 학생이 없습니다</div>'; return; }
     grid.innerHTML = students.map((s,i) => `
-      <div class="qr-card">
+      <div class="qr-card" id="qc-${i}">
         <div class="qr-box" id="qr-box-${i}"></div>
         <div class="qr-name">${s.name}</div>
         <div class="qr-cls">${s.className}</div>
+        <button class="qr-del" id="qdel-${i}"
+          onclick="deleteRecording(${i},'${s.fileId}','${s.name}','${s.className}')">
+          🗑 삭제
+        </button>
       </div>`).join('');
     students.forEach((s,i) => {
       new QRCode(document.getElementById('qr-box-'+i), {
-        text: makeUrl(s), width: 128, height: 128,
-        colorDark: '#191919', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.L
+        text: makePlayUrl(s), width:128, height:128,
+        colorDark:'#191919', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.L
       });
     });
+  }
+
+  async function deleteRecording(idx, fileId, name, cls) {
+    if (!confirm(`${name} (${cls}) 녹음을 삭제할까요?\n\n삭제 후 학생이 다시 녹음할 수 있어요.`)) return;
+    const btn = document.getElementById('qdel-'+idx);
+    btn.disabled = true; btn.textContent = '삭제 중…';
+    try {
+      const res  = await fetch(getGasUrl(), {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'deleteRecording', fileId }), redirect:'follow'
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('qc-'+idx).remove();
+        students = students.filter((_,i) => i !== idx);
+        document.getElementById('statCount').textContent = students.length;
+        if (!students.length) document.getElementById('qrGrid').innerHTML = '<div class="empty">녹음된 학생이 없습니다</div>';
+      } else {
+        alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+        btn.disabled = false; btn.textContent = '🗑 삭제';
+      }
+    } catch(err) {
+      alert('오류: ' + err.message);
+      btn.disabled = false; btn.textContent = '🗑 삭제';
+    }
   }
 
   async function downloadZip() {
@@ -296,8 +348,8 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       canvas.toBlob(blob => { zip.file(school+'_'+s.name+'_'+s.className+'.png', blob); resolve(); }, 'image/png');
     })));
     const csvRows = [['학교','이름','학반','QR URL']];
-    students.forEach(s => csvRows.push([school, s.name, s.className, makeUrl(s)]));
-    zip.file('학생목록.csv', '\uFEFF' + csvRows.map(r => r.join(',')).join('\n'));
+    students.forEach(s => csvRows.push([school, s.name, s.className, makePlayUrl(s)]));
+    zip.file('학생목록.csv', '\uFEFF' + csvRows.map(r=>r.join(',')).join('\n'));
     saveAs(await zip.generateAsync({type:'blob'}), school+'_QR코드.zip');
     btn.disabled = false; btn.textContent = 'ZIP 다운로드';
   }
@@ -308,23 +360,39 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
       const res  = await fetch(getGasUrl() + '?action=getPasswords');
       const data = await res.json();
       const list = document.getElementById('pwList');
-      if (!data.passwords || !data.passwords.length) {
-        list.innerHTML = '<div class="pw-empty">설정된 비밀번호가 없습니다</div>'; return;
+      if (!data.passwords?.length) {
+        list.innerHTML = '<div class="pw-empty">설정된 학교가 없습니다</div>'; return;
       }
       list.innerHTML = data.passwords.map(p => {
         const dlOn  = p.downloadEnabled !== false;
         const encSc = encodeURIComponent(p.school);
         const safeSc = p.school.replace(/'/g,"\\'");
+        const badge  = getPeriodBadge(p.startDate, p.endDate);
+        const dateStr = (p.startDate || p.endDate)
+          ? `<span>📅 ${p.startDate||'?'} ~ ${p.endDate||'?'}</span> ${badge}`
+          : '<span style="color:var(--faint)">기간 없음 (항상 허용)</span>';
         return `
         <div class="pw-row" id="pwrow-${encSc}">
-          <span class="pw-school">${p.school}</span>
-          <span class="pw-value">${p.password}</span>
-          <button class="dl-toggle ${dlOn?'on':'off'}" id="dltog-${encSc}"
-            onclick="toggleDownload('${safeSc}', ${dlOn})"
-            title="${dlOn?'클릭하면 다운로드 차단':'클릭하면 다운로드 허용'}">
-            ⬇ 다운 ${dlOn?'ON':'OFF'}
-          </button>
-          <button class="pw-del" onclick="deletePassword('${safeSc}')">삭제</button>
+          <div class="pw-row-top">
+            <span class="pw-school">🏫 ${p.school}</span>
+            <span class="pw-value">🔒 ${p.password}</span>
+          </div>
+          <div class="pw-dates">${dateStr}</div>
+          <div class="pw-actions">
+            <button class="dl-toggle ${dlOn?'on':'off'}" id="dltog-${encSc}"
+              onclick="toggleDownload('${safeSc}',${dlOn})" title="${dlOn?'클릭시 다운로드 차단':'클릭시 다운로드 허용'}">
+              ⬇ 다운 ${dlOn?'ON':'OFF'}
+            </button>
+            <button class="copy-btn" id="copybtn-${encSc}"
+              onclick="copyShareMsg('${safeSc}','${encSc}')">
+              📋 복사
+            </button>
+            <button class="share-btn" id="kakobtn-${encSc}"
+              onclick="shareKakao('${safeSc}')">
+              💬 카톡
+            </button>
+            <button class="pw-del" onclick="deletePassword('${safeSc}')">삭제</button>
+          </div>
         </div>`;
       }).join('');
     } catch {
@@ -332,83 +400,134 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     }
   }
 
-  async function toggleDownload(school, currentlyEnabled) {
-    const newState = !currentlyEnabled;
-    const encSc = encodeURIComponent(school);
-    const btn = document.getElementById('dltog-' + encSc);
-    if (btn) btn.disabled = true;
-    try {
-      const res  = await fetch(getGasUrl(), {
-        method: 'POST',
-        headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ action:'setDownloadEnabled', school, enabled: newState }),
-        redirect: 'follow'
-      });
-      const data = await res.json();
-      if (data.success) {
-        showMsg('pwDelOk', `✓ ${school} 다운로드 ${newState ? '허용' : '차단'}으로 변경됐습니다.`);
-        loadPasswords();
-      } else {
-        showMsg('pwDelErr', '변경 실패: ' + (data.error || '알 수 없는 오류'));
-        if (btn) btn.disabled = false;
-      }
-    } catch (err) {
-      showMsg('pwDelErr', '오류: ' + err.message);
-      if (btn) btn.disabled = false;
-    }
+  function getPeriodBadge(startDate, endDate) {
+    if (!startDate && !endDate) return '';
+    const now   = new Date(); now.setHours(0,0,0,0);
+    const start = startDate ? new Date(startDate) : null;
+    const end   = endDate   ? new Date(endDate)   : null;
+    if (start && now < start) return '<span class="pd-badge upcoming">예정</span>';
+    if (end   && now > end)   return '<span class="pd-badge ended">종료</span>';
+    return '<span class="pd-badge active">진행중</span>';
   }
 
   async function savePassword() {
     const school = document.getElementById('pwSchool').value.trim();
     const pw     = document.getElementById('pwValue').value.trim();
-    if (!school || !pw) { showMsg('pwErr','학교명과 비밀번호를 모두 입력하세요.'); return; }
+    const start  = document.getElementById('pwStart').value;
+    const end    = document.getElementById('pwEnd').value;
+    if (!school || !pw) { showMsg('pwErr','학교명과 비밀번호를 입력하세요.'); return; }
+    if (start && end && start > end) { showMsg('pwErr','종료일이 시작일보다 빠릅니다.'); return; }
     try {
       const res  = await fetch(getGasUrl(), {
-        method: 'POST',
-        headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({action:'setPassword', school, password:pw}),
-        redirect: 'follow'
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'setPassword', school, password:pw, startDate:start, endDate:end }),
+        redirect:'follow'
       });
       const data = await res.json();
       if (data.success) {
-        showMsg('pwOk','✓ 비밀번호가 저장됐습니다.');
-        document.getElementById('pwSchool').value = '';
-        document.getElementById('pwValue').value  = '';
+        showMsg('pwOk','✓ 저장됐습니다.');
+        clearPwForm();
         loadPasswords();
       } else throw new Error(data.error);
-    } catch (err) { showMsg('pwErr','저장 실패: ' + err.message); }
+    } catch(err) { showMsg('pwErr','저장 실패: ' + err.message); }
+  }
+
+  function clearPwForm() {
+    ['pwSchool','pwValue'].forEach(id => document.getElementById(id).value = '');
+    ['pwStart','pwEnd'].forEach(id => document.getElementById(id).value = '');
+  }
+
+  async function toggleDownload(school, currentlyEnabled) {
+    const newState = !currentlyEnabled;
+    const encSc = encodeURIComponent(school);
+    const btn   = document.getElementById('dltog-' + encSc);
+    if (btn) btn.disabled = true;
+    try {
+      const res  = await fetch(getGasUrl(), {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'setDownloadEnabled', school, enabled:newState }), redirect:'follow'
+      });
+      const data = await res.json();
+      if (data.success) { showMsg('pwDelOk',`✓ ${school} 다운로드 ${newState?'허용':'차단'}으로 변경됐습니다.`); loadPasswords(); }
+      else { showMsg('pwDelErr','변경 실패: ' + (data.error||'')); if(btn) btn.disabled=false; }
+    } catch(err) { showMsg('pwDelErr','오류: ' + err.message); if(btn) btn.disabled=false; }
   }
 
   async function deletePassword(school) {
-    if (!confirm(school + ' 비밀번호를 삭제할까요?')) return;
+    if (!confirm(school + ' 설정을 삭제할까요?')) return;
     const encSc = encodeURIComponent(school);
-    const row = document.getElementById('pwrow-' + encSc);
+    const row   = document.getElementById('pwrow-' + encSc);
     if (row) row.querySelector('.pw-del').disabled = true;
     try {
       const res  = await fetch(getGasUrl(), {
-        method: 'POST',
-        headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({action:'deletePassword', school}),
-        redirect: 'follow'
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'deletePassword', school }), redirect:'follow'
       });
       const data = await res.json();
-      if (data.success) {
-        showMsg('pwDelOk','✓ 삭제됐습니다.');
-        loadPasswords();
-      } else {
-        showMsg('pwDelErr','삭제 실패: ' + (data.error || '알 수 없는 오류'));
-        if (row) row.querySelector('.pw-del').disabled = false;
+      if (data.success) { showMsg('pwDelOk','✓ 삭제됐습니다.'); loadPasswords(); }
+      else { showMsg('pwDelErr','삭제 실패: '+(data.error||'')); if(row) row.querySelector('.pw-del').disabled=false; }
+    } catch(err) { showMsg('pwDelErr','오류: '+err.message); if(row) row.querySelector('.pw-del').disabled=false; }
+  }
+
+  /* ── 링크 공유 ── */
+  function buildShareMsg(school) {
+    const base = document.getElementById('pwList');
+    // passwords 목록에서 해당 학교 데이터 가져오기
+    const rows = document.querySelectorAll('[id^="pwrow-"]');
+    let pw='', startDate='', endDate='';
+    rows.forEach(r => {
+      if (r.querySelector('.pw-school').textContent.includes(school)) {
+        pw        = r.querySelector('.pw-value').textContent.replace('🔒 ','').trim();
+        const dt  = r.querySelector('.pw-dates');
+        if (dt) {
+          const m = dt.textContent.match(/(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})/);
+          if (m) { startDate=m[1]; endDate=m[2]; }
+        }
       }
-    } catch (err) {
-      showMsg('pwDelErr','오류: ' + err.message);
-      if (row) row.querySelector('.pw-del').disabled = false;
+    });
+    const recordUrl = getPagesUrl() + '/record.html?school=' + encodeURIComponent(school);
+    let msg = `🎓 ${school} 졸업 음성 메시지 녹음 안내\n\n`;
+    msg += `📎 녹음 링크\n${recordUrl}\n`;
+    if (pw) msg += `\n🔒 비밀번호: ${pw}`;
+    if (startDate || endDate) msg += `\n\n📅 녹음 기간\n${startDate||'?'} ~ ${endDate||'?'}`;
+    msg += '\n\n늘스튜디오';
+    return msg;
+  }
+
+  async function copyShareMsg(school, encSc) {
+    const msg = buildShareMsg(school);
+    const btn = document.getElementById('copybtn-' + encSc);
+    try {
+      await navigator.clipboard.writeText(msg);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    }
+    btn.textContent = '✓ 복사됨'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent='📋 복사'; btn.classList.remove('done'); }, 2000);
+  }
+
+  function shareKakao(school) {
+    const msg = buildShareMsg(school);
+    if (navigator.share) {
+      navigator.share({ title: school + ' 녹음 안내', text: msg }).catch(()=>{});
+    } else {
+      window.open('kakaotalk://msg?text=' + encodeURIComponent(msg), '_blank');
+      setTimeout(() => {
+        if (!document.hidden) {
+          navigator.clipboard.writeText(msg).then(() =>
+            alert('카카오톡이 열리지 않으면 클립보드에 복사된 내용을 붙여넣기 해주세요!')
+          ).catch(()=>{});
+        }
+      }, 1500);
     }
   }
 
   function showMsg(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg; el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 4000);
+    setTimeout(() => { el.style.display='none'; }, 4000);
   }
 </script>
 </body>

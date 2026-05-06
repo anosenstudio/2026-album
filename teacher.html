@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>늘스튜디오 — 선생님 확인</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F8FA; --card:#FFFFFF; --primary:#3182F6; --pri-lt:#5B9DF8; --pri-bg:#EBF3FE;
+  --border:#E5E8EB; --text:#191919; --sub:#4E4E4E; --muted:#8B95A1; --faint:#C6CAD0;
+  --input-bg:#F2F4F6; --red:#F04452; --red-bg:#FFF2F3; --red-bd:#FDDDDD;
+  --green:#2BA25B; --green-bg:#F0FAF4; --green-bd:#B5DFC4;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
+}
+body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.25rem 4rem}
+@keyframes up    {from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin  {to{transform:rotate(360deg)}}
+@keyframes shake {0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+@keyframes wave  {0%,100%{height:3px;opacity:.25}50%{height:22px;opacity:.9}}
+
+.page{width:100%;max-width:500px}
+
+/* ── 로그인 ── */
+.login-wrap{animation:up .5s cubic-bezier(.22,1,.36,1) both}
+.login-logo{font-size:11px;font-weight:600;color:var(--primary);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:.5rem}
+.login-title{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.5px;margin-bottom:.25rem}
+.login-desc{font-size:14px;color:var(--muted);font-weight:300;margin-bottom:2rem}
+.card{background:var(--card);border-radius:16px;padding:1.5rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:600;color:var(--sub);margin-bottom:1rem}
+.field{margin-bottom:.875rem}
+.field:last-of-type{margin-bottom:0}
+.lbl{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:.4rem}
+input{width:100%;padding:13px 15px;background:var(--input-bg);border:1.5px solid transparent;border-radius:10px;color:var(--text);font-size:15px;font-family:'Noto Sans KR',sans-serif;outline:none;transition:border-color .18s,background .18s}
+input:focus{background:var(--card);border-color:var(--pri-lt)}
+input::placeholder{color:var(--faint)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:48px}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px}
+.login-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:15px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;margin-top:1rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.login-btn:hover:not(:disabled){background:var(--pri-lt)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-btn .ls{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.login-btn.loading .ls{display:block}
+.login-btn.loading .ll{opacity:.7}
+.err-txt{color:var(--red);font-size:12.5px;text-align:center;min-height:18px;margin-top:.625rem}
+.err-txt.shake{animation:shake .35s ease}
+
+/* ── 대시보드 ── */
+.dash{display:none;animation:up .45s cubic-bezier(.22,1,.36,1) both;width:100%}
+.dash-header{margin-bottom:1.75rem}
+.dash-school{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px;margin-bottom:.2rem}
+.dash-sub{font-size:13px;color:var(--muted);font-weight:300}
+.stats-row{display:flex;gap:.625rem;margin-bottom:1.25rem}
+.stat{flex:1;background:var(--card);border-radius:12px;padding:.875rem 1rem;box-shadow:var(--shadow);text-align:center}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-.5px}
+.stat-val.blue{color:var(--primary)}
+.stat-val.green{color:var(--green)}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* 필터 바 */
+.filter-bar{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:var(--card);color:var(--sub);font-size:12.5px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.filter-chip:hover:not(.active){background:var(--input-bg)}
+
+/* 학생 목록 */
+.student-list{display:flex;flex-direction:column;gap:8px}
+.s-row{background:var(--card);border-radius:12px;padding:1rem 1.125rem;box-shadow:var(--shadow);transition:box-shadow .15s}
+.s-row.expanded{box-shadow:0 2px 16px rgba(0,0,0,.1)}
+.s-top{display:flex;align-items:center;gap:10px;cursor:pointer}
+.s-avatar{width:36px;height:36px;border-radius:50%;background:var(--pri-bg);color:var(--primary);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s-info{flex:1;min-width:0}
+.s-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1px}
+.s-cls{font-size:12px;color:var(--muted)}
+.s-date{font-size:11px;color:var(--faint);margin-left:auto;flex-shrink:0;text-align:right}
+.s-arrow{font-size:11px;color:var(--faint);margin-left:6px;transition:transform .2s;flex-shrink:0}
+.s-row.expanded .s-arrow{transform:rotate(180deg)}
+
+/* 인라인 플레이어 */
+.s-player{display:none;margin-top:1rem;border-top:1px solid var(--border-l);padding-top:1rem}
+.s-row.expanded .s-player{display:block;animation:fadeIn .25s ease}
+.mini-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:28px;margin-bottom:.875rem}
+.mini-bar{width:2.5px;border-radius:99px;background:var(--pri-lt);height:3px;opacity:.25}
+.mini-wave.playing .mini-bar{animation:wave 1.2s ease-in-out infinite}
+.mini-controls{display:flex;align-items:center;gap:8px}
+.mini-play{width:40px;height:40px;border-radius:50%;border:none;background:var(--pri-bg);color:var(--primary);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,transform .1s}
+.mini-play:hover{background:#D8EAFD;transform:scale(1.05)}
+.mini-play:active{transform:scale(.93)}
+.mini-play:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.mini-seek{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:99px;outline:none;cursor:pointer}
+.mini-seek::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid var(--card);box-shadow:0 1px 4px rgba(49,130,246,.4);cursor:pointer}
+.mini-seek::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid var(--card);cursor:pointer}
+.mini-time{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:35px}
+.mini-status{font-size:11.5px;color:var(--muted);text-align:center;margin-top:.5rem;min-height:16px}
+.mini-loading{display:none;text-align:center;padding:.5rem 0}
+.mini-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--faint);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+
+/* 빈 상태 */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px}
+
+/* 로딩 */
+.load-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:2rem;color:var(--muted);font-size:13px}
+.load-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--faint);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+
+footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);letter-spacing:.3px;font-weight:300}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── 로그인 ── -->
+  <div id="loginWrap" class="login-wrap">
+    <div style="margin-bottom:2rem">
+      <div class="login-logo">늘스튜디오</div>
+      <div class="login-title">선생님 확인</div>
+      <div class="login-desc">학교명과 비밀번호로 녹음 현황을 확인하세요</div>
+    </div>
+    <div class="card">
+      <div class="card-title">로그인</div>
+      <div class="field">
+        <label class="lbl">학교 이름</label>
+        <input id="inSchool" type="text" placeholder="예: ○○초등학교"
+          oninput="clearErr()" onkeydown="if(event.key==='Enter')login()" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="lbl">비밀번호</label>
+        <div class="pw-wrap">
+          <input id="inPw" type="password" placeholder="선생님 비밀번호"
+            oninput="clearErr()" onkeydown="if(event.key==='Enter')login()" />
+          <button class="pw-eye" onclick="toggleEye()">👁</button>
+        </div>
+      </div>
+      <div class="err-txt" id="errTxt"></div>
+      <button class="login-btn" id="loginBtn" onclick="login()">
+        <span class="ls"></span><span class="ll">확인</span>
+      </button>
+    </div>
+    <footer>소중한 순간은 늘 여기에 · 늘스튜디오</footer>
+  </div>
+
+  <!-- ── 대시보드 ── -->
+  <div id="dash" class="dash">
+    <div class="dash-header">
+      <div class="dash-school" id="dashSchool"></div>
+      <div class="dash-sub">녹음 현황 — 읽기 전용</div>
+    </div>
+
+    <!-- 통계 -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val blue" id="statTotal">0</div>
+        <div class="stat-lbl">전체 녹음</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val green" id="statBan">—</div>
+        <div class="stat-lbl">현재 반 필터</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="statFiltered">0</div>
+        <div class="stat-lbl">표시 중</div>
+      </div>
+    </div>
+
+    <!-- 반 필터 -->
+    <div class="filter-bar" id="filterBar"></div>
+
+    <!-- 로딩 -->
+    <div class="load-row" id="loadRow">
+      <span class="load-spinner"></span>불러오는 중…
+    </div>
+
+    <!-- 학생 목록 -->
+    <div class="student-list" id="studentList"></div>
+
+    <div style="margin-top:1rem;text-align:right">
+      <button onclick="refreshList()" style="background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;padding:6px 0">
+        🔄 새로고침
+      </button>
+    </div>
+    <footer style="margin-top:2rem">소중한 순간은 늘 여기에 · 늘스튜디오</footer>
+  </div>
+
+</div>
+
+<script>
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
+  const $ = id => document.getElementById(id);
+
+  let currentSchool  = '';
+  let allStudents    = [];
+  let activeFilter   = '전체';
+  let currentAudio   = null; // 현재 재생 중인 <audio>
+  let currentRow     = null; // 현재 열린 s-row
+
+  /* ── 로그인 ── */
+  function toggleEye() {
+    const i = $('inPw');
+    i.type = i.type === 'password' ? 'text' : 'password';
+  }
+  function clearErr() { $('errTxt').textContent = ''; }
+  function showErr(msg) {
+    const el = $('errTxt');
+    el.textContent = msg;
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+    $('inPw').value = '';
+    $('inPw').focus();
+  }
+
+  async function login() {
+    const school = $('inSchool').value.trim();
+    const pw     = $('inPw').value.trim();
+    if (!school) { showErr('학교 이름을 입력해 주세요.'); return; }
+    if (!pw)     { showErr('비밀번호를 입력해 주세요.'); return; }
+    const btn = $('loginBtn');
+    btn.disabled = true; btn.classList.add('loading');
+    try {
+      const res  = await fetch(GAS_URL + '?action=checkPassword&school=' + encodeURIComponent(school) + '&pw=' + encodeURIComponent(pw));
+      const data = await res.json();
+      if (data.ok) {
+        currentSchool = school;
+        $('loginWrap').style.display = 'none';
+        $('dash').style.display = 'block';
+        $('dashSchool').textContent = school;
+        loadStudents();
+      } else {
+        showErr('비밀번호가 틀렸습니다. 선생님 비밀번호를 확인해 주세요.');
+      }
+    } catch {
+      showErr('확인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      btn.disabled = false; btn.classList.remove('loading');
+    }
+  }
+
+  /* ── 학생 목록 로드 ── */
+  async function loadStudents() {
+    $('loadRow').style.display  = 'flex';
+    $('studentList').innerHTML  = '';
+    try {
+      const res  = await fetch(GAS_URL + '?action=list&school=' + encodeURIComponent(currentSchool));
+      const data = await res.json();
+      allStudents = (data.students || []).sort((a, b) => {
+        // 반번호 순 정렬
+        const [aB, aNum] = parseCls(a.className);
+        const [bB, bNum] = parseCls(b.className);
+        return aB !== bB ? aB - bB : aNum - bNum;
+      });
+      $('loadRow').style.display = 'none';
+      $('statTotal').textContent = allStudents.length;
+      buildFilterChips();
+      renderStudents();
+    } catch {
+      $('loadRow').style.display = 'none';
+      $('studentList').innerHTML = '<div class="empty-state">목록을 불러오지 못했습니다</div>';
+    }
+  }
+
+  function refreshList() {
+    stopCurrentAudio();
+    loadStudents();
+  }
+
+  function parseCls(cls) {
+    const m = (cls || '').match(/(\d+)반\s*(\d+)번/);
+    return m ? [parseInt(m[1]), parseInt(m[2])] : [999, 999];
+  }
+
+  /* ── 반 필터 칩 생성 ── */
+  function buildFilterChips() {
+    const bans = [...new Set(allStudents.map(s => {
+      const m = (s.className || '').match(/(\d+)반/);
+      return m ? m[1] + '반' : '기타';
+    }))].sort((a, b) => {
+      const na = parseInt(a), nb = parseInt(b);
+      return isNaN(na) || isNaN(nb) ? a.localeCompare(b) : na - nb;
+    });
+    const bar = $('filterBar');
+    bar.innerHTML = ['전체', ...bans].map(b =>
+      `<button class="filter-chip${b === activeFilter ? ' active' : ''}" onclick="setFilter('${b}')">${b}</button>`
+    ).join('');
+  }
+
+  function setFilter(ban) {
+    activeFilter = ban;
+    stopCurrentAudio();
+    buildFilterChips();
+    renderStudents();
+    $('statBan').textContent = ban;
+  }
+
+  /* ── 학생 목록 렌더 ── */
+  function renderStudents() {
+    const filtered = activeFilter === '전체'
+      ? allStudents
+      : allStudents.filter(s => (s.className || '').includes(activeFilter.replace('반','') + '반'));
+    $('statFiltered').textContent = filtered.length;
+
+    if (!filtered.length) {
+      $('studentList').innerHTML = '<div class="empty-state">해당 조건의 학생이 없습니다</div>';
+      return;
+    }
+    $('studentList').innerHTML = filtered.map((s, i) => {
+      const initials = (s.name || '?').slice(-1);
+      const dateStr  = formatDate(s.timestamp);
+      const safeId   = 'row-' + encodeURIComponent(s.fileId);
+      return `
+      <div class="s-row" id="${safeId}">
+        <div class="s-top" onclick="toggleRow('${s.fileId}')">
+          <div class="s-avatar">${initials}</div>
+          <div class="s-info">
+            <div class="s-name">${s.name}</div>
+            <div class="s-cls">${s.className}</div>
+          </div>
+          <div class="s-date">${dateStr}</div>
+          <div class="s-arrow">▾</div>
+        </div>
+        <div class="s-player" id="player-${s.fileId}">
+          <div class="mini-loading" id="ml-${s.fileId}">
+            <span class="mini-spinner"></span>
+          </div>
+          <div id="pc-${s.fileId}" style="display:none">
+            <div class="mini-wave" id="mw-${s.fileId}">
+              <div class="mini-bar" style="animation-delay:.00s"></div>
+              <div class="mini-bar" style="animation-delay:.08s"></div>
+              <div class="mini-bar" style="animation-delay:.16s"></div>
+              <div class="mini-bar" style="animation-delay:.24s"></div>
+              <div class="mini-bar" style="animation-delay:.32s"></div>
+              <div class="mini-bar" style="animation-delay:.24s"></div>
+              <div class="mini-bar" style="animation-delay:.16s"></div>
+              <div class="mini-bar" style="animation-delay:.08s"></div>
+              <div class="mini-bar" style="animation-delay:.00s"></div>
+            </div>
+            <div class="mini-controls">
+              <button class="mini-play" id="mp-${s.fileId}" onclick="playStudent('${s.fileId}')">▶</button>
+              <input  class="mini-seek" id="ms-${s.fileId}" type="range" min="0" max="100" value="0" step="0.1">
+              <span   class="mini-time" id="mt-${s.fileId}">0:00</span>
+            </div>
+            <div class="mini-status" id="mst-${s.fileId}"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d)) return '';
+      return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+             String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    } catch { return ''; }
+  }
+
+  /* ── 행 열기/닫기 ── */
+  const loadedAudios = {}; // fileId → { blob, audio }
+
+  function toggleRow(fileId) {
+    const safeId = 'row-' + encodeURIComponent(fileId);
+    const row    = $(safeId);
+    const isOpen = row.classList.contains('expanded');
+
+    // 다른 열린 행 닫기
+    if (currentRow && currentRow !== row) {
+      currentRow.classList.remove('expanded');
+    }
+    stopCurrentAudio();
+
+    if (isOpen) {
+      row.classList.remove('expanded');
+      currentRow = null;
+    } else {
+      row.classList.add('expanded');
+      currentRow = row;
+      if (!loadedAudios[fileId]) {
+        fetchAudio(fileId);
+      } else {
+        showAudioControls(fileId);
+      }
+    }
+  }
+
+  async function fetchAudio(fileId) {
+    $('ml-' + fileId).style.display = 'block';
+    $('pc-' + fileId).style.display = 'none';
+    try {
+      const res  = await fetch(GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId));
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || '로드 실패');
+      const binary = atob(data.b64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob  = new Blob([bytes], { type: data.mime || 'audio/webm' });
+      const audio = new Audio();
+      audio.src   = URL.createObjectURL(blob);
+      loadedAudios[fileId] = { blob, audio };
+      wireAudio(fileId, audio);
+    } catch(err) {
+      $('ml-' + fileId).style.display = 'none';
+      $('pc-' + fileId).style.display = 'block';
+      $('mst-' + fileId).textContent  = '불러오기 실패: ' + err.message;
+    }
+  }
+
+  function wireAudio(fileId, audio) {
+    const mw  = $('mw-' + fileId);
+    const mp  = $('mp-' + fileId);
+    const ms  = $('ms-' + fileId);
+    const mt  = $('mt-' + fileId);
+    const mst = $('mst-' + fileId);
+    const ml  = $('ml-' + fileId);
+    const pc  = $('pc-' + fileId);
+
+    audio.addEventListener('canplay', () => {
+      ml.style.display = 'none';
+      pc.style.display = 'block';
+      mp.disabled      = false;
+      updateMiniSeek(ms, 0);
+    }, { once: true });
+
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration || !isFinite(audio.duration)) return;
+      const pct = (audio.currentTime / audio.duration) * 100;
+      ms.value    = pct;
+      mt.textContent = fmtSec(audio.currentTime);
+      updateMiniSeek(ms, pct);
+    });
+
+    audio.addEventListener('play',  () => { mw.className='mini-wave playing'; mp.textContent='■'; mst.textContent='재생 중'; });
+    audio.addEventListener('pause', () => { mw.className='mini-wave'; mp.textContent='▶'; mst.textContent=''; });
+    audio.addEventListener('ended', () => { mw.className='mini-wave'; mp.textContent='▶'; updateMiniSeek(ms,100); mst.textContent='재생 완료'; });
+    audio.addEventListener('error', () => { mst.textContent='재생 오류'; mp.disabled=true; });
+
+    ms.addEventListener('change', () => {
+      audio.currentTime = (ms.value / 100) * audio.duration;
+    });
+    ms.addEventListener('input', () => {
+      updateMiniSeek(ms, parseFloat(ms.value));
+      mt.textContent = fmtSec((parseFloat(ms.value)/100)*(audio.duration||0));
+    });
+
+    audio.load();
+    showAudioControls(fileId);
+  }
+
+  function showAudioControls(fileId) {
+    $('ml-' + fileId).style.display = 'none';
+    $('pc-' + fileId).style.display = 'block';
+  }
+
+  function playStudent(fileId) {
+    const entry = loadedAudios[fileId];
+    if (!entry) return;
+    const audio = entry.audio;
+    if (audio.paused) {
+      // 다른 오디오 정지
+      stopCurrentAudio(fileId);
+      currentAudio = { fileId, audio };
+      audio.play();
+    } else {
+      audio.pause();
+      currentAudio = null;
+    }
+  }
+
+  function stopCurrentAudio(exceptId) {
+    if (currentAudio && currentAudio.fileId !== exceptId) {
+      try { currentAudio.audio.pause(); currentAudio.audio.currentTime = 0; } catch(e) {}
+      currentAudio = null;
+    }
+  }
+
+  function updateMiniSeek(el, pct) {
+    el.style.background = `linear-gradient(to right,var(--primary) ${pct}%,var(--border-l) ${pct}%)`;
+  }
+
+  function fmtSec(s) {
+    if (!s || isNaN(s) || !isFinite(s)) return '0:00';
+    return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+  }
+</script>
+</body>
+</html>

@@ -9,56 +9,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F7F8FA; --card:#FFFFFF; --primary:#3182F6; --pri-lt:#5B9DF8; --pri-bg:#EBF3FE;
-  --border:#E5E8EB; --border-l:#EEF1F5; --text:#191919; --sub:#4E4E4E;
-  --muted:#8B95A1; --faint:#C6CAD0;
+  --bg:#F7F8FA;--card:#fff;--primary:#3182F6;--pri-lt:#5B9DF8;--pri-bg:#EBF3FE;
+  --border:#E5E8EB;--border-l:#EEF1F5;--text:#191919;--sub:#4E4E4E;
+  --muted:#8B95A1;--faint:#C6CAD0;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
 }
 body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.25rem 3rem}
-
 @keyframes up    {from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes spin  {to{transform:rotate(360deg)}}
 @keyframes wave  {0%,100%{height:3px;opacity:.2}50%{height:34px;opacity:.85}}
 @keyframes bloom {0%{transform:scale(.75);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
-@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.18);opacity:.15}}
-@keyframes overlayFade{to{opacity:0;pointer-events:none}}
+@keyframes ring  {0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.18);opacity:.12}}
 
 /* ── 터치 오버레이 ── */
 .overlay{
   position:fixed;inset:0;z-index:200;
-  background:linear-gradient(160deg,#EBF3FE 0%,#F7F8FA 60%,#EFF6FF 100%);
+  background:linear-gradient(155deg,#EBF3FE 0%,#F7F8FA 55%,#EFF6FF 100%);
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:opacity .7s ease;
+  cursor:pointer;transition:opacity .8s ease;
 }
 .overlay.hiding{opacity:0;pointer-events:none}
-.overlay-inner{text-align:center;padding:2rem;animation:up .65s cubic-bezier(.22,1,.36,1) both}
-.ov-school{font-size:23px;font-weight:700;color:var(--text);letter-spacing:-.5px;margin-bottom:.25rem}
-.ov-student{font-size:14px;color:var(--primary);font-weight:500;margin-bottom:.25rem;min-height:20px}
-.ov-desc{font-size:13px;color:var(--muted);font-weight:300;margin-bottom:2.5rem}
-.ring-wrap{position:relative;width:96px;height:96px;margin:0 auto 1.5rem}
-.ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--primary);animation:ringPulse 2.2s ease-in-out infinite}
-.ring2{position:absolute;inset:12px;border-radius:50%;border:1.5px solid var(--primary);animation:ringPulse 2.2s ease-in-out infinite .55s}
-.ring-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px}
-.ov-hint{font-size:13.5px;color:var(--sub);font-weight:400;margin-bottom:.5rem}
-.ov-sub{font-size:12px;color:var(--muted);font-weight:300}
+.ov-inner{text-align:center;padding:2rem;animation:up .65s cubic-bezier(.22,1,.36,1) both}
+.ov-school {font-size:23px;font-weight:700;color:var(--text);letter-spacing:-.5px;margin-bottom:.25rem}
+.ov-student{font-size:14px;color:var(--primary);font-weight:500;min-height:20px;margin-bottom:.25rem}
+.ov-desc   {font-size:13px;color:var(--muted);font-weight:300;margin-bottom:2.25rem}
+.ring-wrap {position:relative;width:96px;height:96px;margin:0 auto 1.5rem}
+.r1{position:absolute;inset:0;border-radius:50%;border:2px solid var(--primary);animation:ring 2.2s ease-in-out infinite}
+.r2{position:absolute;inset:14px;border-radius:50%;border:1.5px solid var(--primary);animation:ring 2.2s ease-in-out infinite .55s}
+.r-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px}
+.ov-hint  {font-size:14px;color:var(--sub);font-weight:500;margin-bottom:.4rem;display:none}
+.ov-sub   {font-size:12px;color:var(--muted);font-weight:300;display:none}
 .ov-loading{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--muted);margin-top:1.25rem}
-.ov-spinner{width:12px;height:12px;border:2px solid var(--faint);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+.ov-spin  {width:12px;height:12px;border:2px solid var(--faint);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
 
 /* ── 플레이어 ── */
 .wrap{width:100%;max-width:400px;animation:up .55s cubic-bezier(.22,1,.36,1) both}
 .top-header{margin-bottom:2rem}
-.school-name{font-size:26px;font-weight:700;color:var(--text);line-height:1.3;letter-spacing:-.5px;margin-bottom:.25rem}
-.student-info{font-size:15px;font-weight:400;color:var(--primary);margin-bottom:.25rem}
+.school-name{font-size:26px;font-weight:700;line-height:1.3;letter-spacing:-.5px;margin-bottom:.25rem}
+.student-info{font-size:15px;color:var(--primary);margin-bottom:.25rem}
 .page-desc{font-size:14px;color:var(--muted);font-weight:300}
 .card{background:var(--card);border-radius:16px;padding:1.5rem;margin-bottom:.75rem;box-shadow:var(--shadow)}
 .card-title{font-size:13px;font-weight:600;color:var(--sub);margin-bottom:1.25rem}
 .waveform{display:flex;align-items:center;justify-content:center;gap:4px;height:44px;margin-bottom:1.375rem}
 .bar{width:3px;border-radius:99px;background:var(--pri-lt);height:3px;opacity:.2}
 .waveform.playing .bar{animation:wave 1.35s ease-in-out infinite}
-.spin-wrap{text-align:center;padding:.25rem 0 1.125rem}
-.spinner{display:inline-block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
-.load-txt{font-size:11.5px;color:var(--muted);margin-top:.625rem}
 .play-btn{width:64px;height:64px;border-radius:50%;border:none;background:var(--pri-bg);color:var(--primary);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;transition:transform .12s,box-shadow .2s,background .2s;box-shadow:0 2px 10px rgba(49,130,246,.2)}
 .play-btn:hover{background:#D8EAFD;box-shadow:0 6px 20px rgba(49,130,246,.3);transform:scale(1.05)}
 .play-btn:active{transform:scale(.93)}
@@ -74,19 +69,19 @@ body{min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif
 
 /* ── 완료 화면 ── */
 .done-wrap{display:none;text-align:center;padding:2rem 0;animation:fadeIn .6s ease both;width:100%;max-width:400px}
-.done-icon{font-size:54px;display:block;margin-bottom:1.25rem;animation:bloom .6s cubic-bezier(.22,1,.36,1) both}
-.done-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:.5rem;letter-spacing:-.3px}
-.done-msg{font-size:14px;color:var(--muted);line-height:2.1;font-weight:300}
+.done-icon {font-size:54px;display:block;margin-bottom:1.25rem;animation:bloom .6s cubic-bezier(.22,1,.36,1) both}
+.done-title{font-size:20px;font-weight:700;margin-bottom:.5rem;letter-spacing:-.3px}
+.done-msg  {font-size:14px;color:var(--muted);line-height:2.1;font-weight:300}
 .done-divider{width:32px;height:1px;background:var(--border);margin:1.5rem auto}
-.done-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.done-actions{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .replay-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:10px;border:none;background:var(--pri-bg);color:var(--primary);font-size:14px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .2s;box-shadow:0 2px 10px rgba(49,130,246,.15)}
 .replay-btn:hover{background:#D8EAFD}
-.save-btn{display:inline-flex;align-items:center;gap:6px;padding:13px 22px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:14px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(49,130,246,.25)}
+.save-btn{display:inline-flex;align-items:center;gap:6px;padding:13px 22px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:14px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,transform .1s;box-shadow:0 2px 8px rgba(49,130,246,.25)}
 .save-btn:hover:not(:disabled){background:var(--pri-lt)}
 .save-btn:active{transform:scale(.96)}
 .save-btn:disabled{opacity:.6;cursor:not-allowed}
-.save-btn .btn-spin{display:none;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
-.save-btn.converting .btn-spin{display:block}
+.save-btn .bs{display:none;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.save-btn.converting .bs{display:block}
 .policy-note{background:var(--pri-bg);border:1.5px solid rgba(49,130,246,.2);border-radius:12px;padding:.875rem 1.125rem;margin-top:1.25rem;display:none;animation:fadeIn .5s ease both}
 .policy-note p{font-size:12.5px;color:var(--primary);font-weight:500;line-height:1.9;text-align:center}
 .policy-note p strong{color:#1A6AE8;font-weight:700}
@@ -97,20 +92,17 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 
 <!-- ── 터치 오버레이 ── -->
 <div class="overlay" id="overlay" onclick="startPlayback()">
-  <div class="overlay-inner">
-    <div class="ov-school" id="ovSchool">늘스튜디오</div>
+  <div class="ov-inner">
+    <div class="ov-school"  id="ovSchool">늘스튜디오</div>
     <div class="ov-student" id="ovStudent"></div>
     <div class="ov-desc">졸업 음성 메시지</div>
     <div class="ring-wrap">
-      <div class="ring"></div>
-      <div class="ring2"></div>
-      <div class="ring-icon">🎓</div>
+      <div class="r1"></div><div class="r2"></div>
+      <div class="r-icon">🎓</div>
     </div>
-    <div class="ov-hint" id="ovHint" style="display:none">화면을 터치하면 시작합니다</div>
-    <div class="ov-sub" id="ovSub" style="display:none">배경음악과 함께 목소리가 재생됩니다</div>
-    <div class="ov-loading" id="ovLoading">
-      <span class="ov-spinner"></span>음성을 불러오는 중…
-    </div>
+    <div class="ov-hint"    id="ovHint">화면을 터치하면 시작합니다</div>
+    <div class="ov-sub"     id="ovSub">잔잔한 연주곡과 함께 목소리가 재생됩니다</div>
+    <div class="ov-loading" id="ovLoading"><span class="ov-spin"></span>음성을 불러오는 중…</div>
   </div>
 </div>
 
@@ -143,7 +135,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   <footer>소중한 순간은 늘 여기에 · 늘스튜디오</footer>
 </div>
 
-<!-- ── 완료 화면 (다운로드 포함) ── -->
+<!-- ── 완료 화면 ── -->
 <div class="done-wrap" id="doneWrap">
   <span class="done-icon">🎓</span>
   <div class="done-title" id="doneTitle"></div>
@@ -153,8 +145,8 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   <div class="done-actions">
     <button class="replay-btn" onclick="replayAudio()">▶&nbsp; 다시 듣기</button>
     <button class="save-btn" id="saveBtn" style="display:none" onclick="downloadMp3()">
-      <span class="btn-spin"></span>
-      <span class="btn-text">⬇ MP3 저장</span>
+      <span class="bs"></span>
+      <span class="bt">⬇ MP3 저장</span>
     </button>
   </div>
   <div class="policy-note" id="policyNote">
@@ -164,42 +156,205 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 </div>
 
 <script>
+/* ════════════════════════════════════════════════
+   BGM — Web Audio API 피아노 앰비언트
+   C장조, 감동적인 선율, BPM 58, 8바 루프 (~34초)
+   저작권 없음 — 100% 코드 생성
+════════════════════════════════════════════════ */
+const BGM = (() => {
+  let ac = null, master = null, on = false, loopTimer = null;
+
+  const BPM  = 58;
+  const B    = 60 / BPM;          // 1박 ≈ 1.034초
+
+  // 음표 주파수
+  const E5=659.25, D5=587.33, C5=523.25, B4=493.88, A4=440,
+        G4=392,    F4=349.23, E4=329.63, D4=293.66, C4=261.63,
+        A3=220,    F3=174.61, G3=196,    C3=130.81,  G2=98;
+
+  // 멜로디: [주파수, 시작(박), 길이(박), 볼륨]
+  // Phrase 1 (C-Am-F-G) — 잔잔한 도입
+  // Phrase 2 (C-Am-F-G) — 감정 고조
+  // 두 번째 반복에서 F5 클라이맥스
+  const MELODY = [
+    // ── Bar 1 (C) ──
+    [E5, 0,    1.5, 0.52], [D5, 1.5, 0.5, 0.42],
+    [C5, 2,    1.0, 0.50], [G4, 3,   1.0, 0.40],
+    // ── Bar 2 (Am) ──
+    [A4, 4,    1.0, 0.48], [C5, 5,   1.5, 0.50],
+    [B4, 6.5,  0.5, 0.40], [A4, 7,   1.0, 0.46],
+    // ── Bar 3 (F) ──
+    [C5, 8,    1.0, 0.50], [A4, 9,   1.0, 0.46],
+    [G4, 10,   1.0, 0.44], [F4, 11,  1.0, 0.44],
+    // ── Bar 4 (G) ──
+    [G4, 12,   1.0, 0.44], [A4, 13,  1.0, 0.44],
+    [B4, 14,   1.5, 0.50], [G4, 15.5,0.5, 0.40],
+    // ── Bar 5 (C) — 두 번째 프레이즈 시작 ──
+    [C5, 16,   1.0, 0.50], [B4, 17,  0.5, 0.43],
+    [A4, 17.5, 0.5, 0.42], [G4, 18,  1.0, 0.44],
+    [E4, 19,   1.0, 0.40],
+    // ── Bar 6 (Am) — 감정 고조 ──
+    [A4, 20,   1.5, 0.52], [G4, 21.5,0.5, 0.40],
+    [A4, 22,   1.0, 0.48], [E5, 23,  1.0, 0.58],   // ← 고조
+    // ── Bar 7 (F→G) — 클라이맥스 ──
+    [698.46, 24, 1.0, 0.62],  // F5 ← 최고조! (698.46Hz)
+    [E5,  25,    1.0, 0.54], [D5, 26, 1.0, 0.50],
+    [B4,  27,    1.0, 0.46],
+    // ── Bar 8 (C) — 잔잔한 해결 ──
+    [C5,  28,    1.0, 0.50], [G4, 29, 1.0, 0.44],
+    [E4,  30,    1.0, 0.40], [C4, 31, 2.5, 0.46],  // 긴 종지
+  ];
+  // 루프 총 길이 = 33.5박
+
+  // 베이스: 각 바에 코드 루트음 한 번 (사인파, 낮고 부드럽게)
+  const BASS = [
+    [C3, 0,  3.8, 0.18], [A3*0.5, 4,  3.8, 0.16],  // A2=110
+    [F3, 8,  3.8, 0.16], [G2,     12, 3.8, 0.16],
+    [C3, 16, 3.8, 0.18], [A3*0.5, 20, 3.8, 0.16],
+    [F3, 24, 3.8, 0.16], [G2,     28, 3.5, 0.14],
+  ];
+
+  // 코드 패드: 4박마다 화음 (매우 조용한 사인파)
+  const PADS = [
+    [C4,0,4,.06],[E4,0,4,.05],[G4,0,4,.05],  // C
+    [A3,4,4,.06],[C4,4,4,.05],[E4,4,4,.05],  // Am
+    [F3,8,4,.06],[A3,8,4,.05],[C4,8,4,.05],  // F
+    [G3,12,4,.06],[B4*.5,12,4,.05],[D4,12,4,.05], // G (B3=246.94)
+    [C4,16,4,.06],[E4,16,4,.05],[G4,16,4,.05],
+    [A3,20,4,.06],[C4,20,4,.05],[E4,20,4,.05],
+    [F3,24,4,.06],[A3,24,4,.05],[C4,24,4,.05],
+    [G3,28,4,.06],[246.94*.5,28,4,.05],[D4,28,4,.04],
+  ];
+
+  const LOOP_SEC = 33.5 * B; // 루프 길이(초)
+
+  function pianoNote(freq, time, dur, vol) {
+    // 사인 + 삼각파 블렌드 → 피아노 음색
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator();
+    const g  = ac.createGain(),       g2 = ac.createGain();
+    o1.type = 'sine';    o1.frequency.value = freq;
+    o2.type = 'triangle';o2.frequency.value = freq * 2;
+    g2.gain.value = 0.10;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master);
+    const v = vol;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(v, time + 0.025);       // 어택
+    g.gain.setValueAtTime(v * 0.62, time + Math.min(0.16, dur * 0.3)); // 디케이
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur); // 릴리즈
+    const end = time + dur + 0.06;
+    o1.start(time); o1.stop(end);
+    o2.start(time); o2.stop(end);
+  }
+
+  function padNote(freq, time, dur, vol) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    o.connect(g); g.connect(master);
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(vol, time + 0.5);
+    g.gain.setValueAtTime(vol, time + dur - 0.5);
+    g.gain.linearRampToValueAtTime(0, time + dur);
+    o.start(time); o.stop(time + dur + 0.05);
+  }
+
+  function schedule(startTime) {
+    MELODY.forEach(([f,sb,db,v]) => pianoNote(f, startTime + sb*B, db*B, v));
+    BASS.forEach(  ([f,sb,db,v]) => padNote  (f, startTime + sb*B, db*B, v));
+    PADS.forEach(  ([f,sb,db,v]) => padNote  (f, startTime + sb*B, db*B, v));
+  }
+
+  return {
+    start() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC || on) return;
+      try {
+        ac = new AC();
+        if (ac.state === 'suspended') ac.resume();
+
+        // ── 신호 체인: master → dry(0.7) → destination
+        //                      → delay → lpf → fb → delay(loop) → wet(0.3) → destination
+        master = ac.createGain();
+        master.gain.setValueAtTime(0, ac.currentTime);
+        master.gain.linearRampToValueAtTime(0.65, ac.currentTime + 3); // 3초 페이드인
+
+        const dry  = ac.createGain(); dry.gain.value = 0.70;
+        const delay = ac.createDelay(0.8); delay.delayTime.value = 0.30;
+        const fb    = ac.createGain(); fb.gain.value = 0.38;
+        const lpf   = ac.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = 2200;
+        const wet  = ac.createGain(); wet.gain.value = 0.32;
+
+        master.connect(dry);        dry.connect(ac.destination);
+        master.connect(delay);
+        delay.connect(lpf); lpf.connect(fb); fb.connect(delay); // 피드백 루프
+        delay.connect(wet); wet.connect(ac.destination);        // 웻 출력
+
+        on = true;
+        schedule(ac.currentTime + 0.15);
+
+        // 루프 스케줄러
+        function loop() {
+          if (!on || !ac) return;
+          schedule(ac.currentTime + 0.5);
+          loopTimer = setTimeout(loop, LOOP_SEC * 1000);
+        }
+        loopTimer = setTimeout(loop, LOOP_SEC * 1000);
+      } catch(e) { console.warn('BGM start:', e); }
+    },
+
+    fadeOut(dur = 2.5) {
+      on = false;
+      clearTimeout(loopTimer);
+      if (!master || !ac) return;
+      try {
+        const now = ac.currentTime;
+        master.gain.cancelScheduledValues(now);
+        master.gain.setValueAtTime(master.gain.value, now);
+        master.gain.linearRampToValueAtTime(0, now + dur);
+      } catch(e) {}
+      setTimeout(() => { try { ac.close(); } catch(e) {} ac=null; master=null; }, (dur+.3)*1000);
+    },
+
+    restart() { this.fadeOut(0.1); setTimeout(() => this.start(), 300); }
+  };
+})();
+
+/* ════════════════════════════════════ */
+
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
 const fileId  = new URLSearchParams(location.search).get('f') || '';
 
-const overlay     = document.getElementById('overlay');
-const ovSchool    = document.getElementById('ovSchool');
-const ovStudent   = document.getElementById('ovStudent');
-const ovHint      = document.getElementById('ovHint');
-const ovSub       = document.getElementById('ovSub');
-const ovLoading   = document.getElementById('ovLoading');
-const schoolName  = document.getElementById('schoolName');
-const studentInfo = document.getElementById('studentInfo');
-const player      = document.getElementById('player');
-const wave        = document.getElementById('wave');
-const playBtn     = document.getElementById('playBtn');
-const statusMsg   = document.getElementById('statusMsg');
-const seekWrap    = document.getElementById('seekWrap');
-const seekBar     = document.getElementById('seekBar');
-const timeCurrent = document.getElementById('timeCurrent');
-const playerWrap  = document.getElementById('playerWrap');
-const doneWrap    = document.getElementById('doneWrap');
-const doneTitle   = document.getElementById('doneTitle');
-const doneMsg     = document.getElementById('doneMsg');
-const saveBtn     = document.getElementById('saveBtn');
-const policyNote  = document.getElementById('policyNote');
+const overlay    = document.getElementById('overlay');
+const ovSchool   = document.getElementById('ovSchool');
+const ovStudent  = document.getElementById('ovStudent');
+const ovHint     = document.getElementById('ovHint');
+const ovSub      = document.getElementById('ovSub');
+const ovLoading  = document.getElementById('ovLoading');
+const schoolName = document.getElementById('schoolName');
+const studentInfo= document.getElementById('studentInfo');
+const player     = document.getElementById('player');
+const wave       = document.getElementById('wave');
+const playBtn    = document.getElementById('playBtn');
+const statusMsg  = document.getElementById('statusMsg');
+const seekWrap   = document.getElementById('seekWrap');
+const seekBar    = document.getElementById('seekBar');
+const timeCurrent= document.getElementById('timeCurrent');
+const playerWrap = document.getElementById('playerWrap');
+const doneWrap   = document.getElementById('doneWrap');
+const doneTitle  = document.getElementById('doneTitle');
+const doneMsg    = document.getElementById('doneMsg');
+const saveBtn    = document.getElementById('saveBtn');
+const policyNote = document.getElementById('policyNote');
 
-let verifiedName = '', verifiedSchool = '', rawBlob = null, audioMime = 'audio/webm';
-let audioReady   = false;  // canplay 이후 true
-let userTouched  = false;  // 오버레이 터치 이후 true
-let dlEnabled    = true;
-const ambient    = new AmbientMusic();
+let verifiedName='', verifiedSchool='', rawBlob=null, audioMime='audio/webm';
+let audioReady=false, userTouched=false, dlEnabled=true;
 
 /* ── 잘못된 URL ── */
 if (!fileId) {
-  ovLoading.style.display = 'none';
-  ovSchool.textContent    = '잘못된 QR코드';
-  ovStudent.textContent   = '올바른 QR코드를 스캔해 주세요';
+  ovLoading.style.display='none';
+  ovSchool.textContent='잘못된 QR코드';
+  ovStudent.textContent='올바른 QR코드를 스캔해 주세요';
 } else {
   loadAudio();
 }
@@ -216,14 +371,12 @@ async function loadAudio() {
     dlEnabled      = data.downloadEnabled !== false;
     const cls      = data.className || '';
 
-    /* 오버레이 텍스트 업데이트 */
     ovSchool.textContent  = verifiedSchool || '졸업앨범';
     ovStudent.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
     ovLoading.style.display = 'none';
     ovHint.style.display    = 'block';
     ovSub.style.display     = 'block';
 
-    /* 플레이어 헤더 세팅 */
     schoolName.textContent  = verifiedSchool || '졸업앨범';
     studentInfo.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
 
@@ -241,41 +394,39 @@ async function loadAudio() {
   }
 }
 
-/* ── canplay 이벤트 ── */
+/* ── canplay: 오디오 준비 완료 ── */
 player.addEventListener('canplay', () => {
-  audioReady = true;
+  audioReady             = true;
   seekWrap.style.display = 'block';
   playBtn.disabled       = false;
   updateSeekColor(0);
-  if (userTouched) beginPlay();  // 오버레이 이미 터치된 경우 즉시 재생
+  if (userTouched) beginPlay(); // 이미 터치한 경우 즉시 재생
 }, { once: true });
 
-/* ── 오버레이 터치 → 재생 시작 ── */
+/* ── 오버레이 터치 ── */
 function startPlayback() {
   if (userTouched) return;
   userTouched = true;
-  /* 오버레이 페이드아웃 */
   overlay.classList.add('hiding');
   setTimeout(() => {
-    overlay.style.display = 'none';
+    overlay.style.display  = 'none';
     playerWrap.style.display = 'block';
-  }, 700);
-  /* 오디오 준비된 경우 즉시, 아니면 canplay 이벤트에서 */
+  }, 800);
   if (audioReady) beginPlay();
 }
 
 function beginPlay() {
-  ambient.start();
+  BGM.start();
   player.play().catch(() => {});
 }
 
-/* ── 재생 / 일시정지 ── */
+/* ── 재생 컨트롤 ── */
 function togglePlay() {
   if (player.paused) player.play(); else player.pause();
 }
 function fmt(s) {
   if (!s || isNaN(s) || !isFinite(s)) return '0:00';
-  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
 }
 function updateSeekColor(pct) {
   seekBar.style.background = `linear-gradient(to right,var(--primary) ${pct}%,var(--border-l) ${pct}%)`;
@@ -289,39 +440,22 @@ player.addEventListener('timeupdate', () => {
 });
 
 let isSeeking = false;
-seekBar.addEventListener('mousedown',  () => { isSeeking = true; });
-seekBar.addEventListener('touchstart', () => { isSeeking = true; }, { passive: true });
+seekBar.addEventListener('mousedown',  () => { isSeeking=true; });
+seekBar.addEventListener('touchstart', () => { isSeeking=true; }, {passive:true});
 seekBar.addEventListener('input',  () => {
   updateSeekColor(parseFloat(seekBar.value));
-  timeCurrent.textContent = fmt((parseFloat(seekBar.value) / 100) * player.duration);
+  timeCurrent.textContent = fmt((parseFloat(seekBar.value)/100) * player.duration);
 });
-seekBar.addEventListener('change', () => {
-  player.currentTime = (seekBar.value / 100) * player.duration;
-  isSeeking = false;
-});
+seekBar.addEventListener('change', () => { player.currentTime=(seekBar.value/100)*player.duration; isSeeking=false; });
 
-player.addEventListener('play',  () => {
-  wave.className = 'waveform playing';
-  playBtn.textContent = '■';
-  statusMsg.textContent = '재생 중…';
-});
-player.addEventListener('pause', () => {
-  wave.className = 'waveform';
-  playBtn.textContent = '▶';
-  statusMsg.textContent = '';
-});
-player.addEventListener('error', () => {
-  statusMsg.className = 'status err';
-  statusMsg.textContent = '음성 재생 중 오류가 발생했습니다.';
-  playBtn.disabled = true;
-});
+player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; statusMsg.textContent='재생 중…'; });
+player.addEventListener('pause', () => { wave.className='waveform'; playBtn.textContent='▶'; statusMsg.textContent=''; });
+player.addEventListener('error', () => { statusMsg.className='status err'; statusMsg.textContent='음성 재생 중 오류가 발생했습니다.'; playBtn.disabled=true; });
 
 /* ── 재생 종료 → 완료 화면 ── */
 player.addEventListener('ended', () => {
-  wave.className = 'waveform';
-  playBtn.textContent = '▶';
-  updateSeekColor(100);
-  ambient.fadeOut(3);
+  wave.className = 'waveform'; playBtn.textContent = '▶'; updateSeekColor(100);
+  BGM.fadeOut(3);
   setTimeout(() => {
     playerWrap.style.display = 'none';
     doneWrap.style.display   = 'block';
@@ -338,140 +472,44 @@ player.addEventListener('ended', () => {
 function replayAudio() {
   doneWrap.style.display   = 'none';
   playerWrap.style.display = 'block';
-  seekBar.value = 0;
-  updateSeekColor(0);
+  seekBar.value = 0; updateSeekColor(0);
   timeCurrent.textContent = '0:00';
   player.currentTime = 0;
-  ambient.restart();
+  BGM.restart();
   player.play();
 }
 
-/* ════════════════════════════════════════
-   배경음악 — Web Audio API 앰비언트 피아노
-   C장조 5음계, 약 84 BPM, 저작권 없음
-════════════════════════════════════════ */
-function AmbientMusic() {
-  this.ctx        = null;
-  this.masterGain = null;
-  this.isPlaying  = false;
-  this.timer      = null;
-  this.beat       = 0;
-  this.nextTime   = 0;
-  // C4, D4, E4, G4, A4, C5, D5, E5 (C장조 5음계 + 옥타브)
-  this.freqs  = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
-  // 16박자 멜로디 패턴 (인덱스)
-  this.melody = [4, 2, 0, 2, 4, 5, 4, 2, 0, 1, 2, 4, 5, 7, 5, 4];
-  // 베이스 패턴 (2박마다)
-  this.bass   = [0, 0, 4, 4, 2, 2, 4, 4];
-  this.tempo  = 60 / 84; // 약 0.714초/박
-}
-
-AmbientMusic.prototype.start = function() {
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  this.ctx        = new AC();
-  this.masterGain = this.ctx.createGain();
-  this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
-  this.masterGain.gain.linearRampToValueAtTime(0.06, this.ctx.currentTime + 3);
-  this.masterGain.connect(this.ctx.destination);
-  this.isPlaying = true;
-  this.beat      = 0;
-  this.nextTime  = this.ctx.currentTime + 0.1;
-  this._schedule();
-};
-
-AmbientMusic.prototype._tone = function(freq, time, dur, vol) {
-  const osc  = this.ctx.createOscillator();
-  const osc2 = this.ctx.createOscillator();
-  const g    = this.ctx.createGain();
-  const g2   = this.ctx.createGain();
-  osc.type  = 'sine';
-  osc2.type = 'triangle';
-  osc.frequency.value  = freq;
-  osc2.frequency.value = freq * 2;
-  g2.gain.value = 0.07;
-  osc.connect(g); osc2.connect(g2); g2.connect(g);
-  g.connect(this.masterGain);
-  const v = vol || 0.28;
-  g.gain.setValueAtTime(0, time);
-  g.gain.linearRampToValueAtTime(v, time + 0.045);
-  g.gain.setValueAtTime(v * 0.65, time + dur * 0.25);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-  const end = time + dur + 0.05;
-  osc.start(time);  osc.stop(end);
-  osc2.start(time); osc2.stop(end);
-};
-
-AmbientMusic.prototype._schedule = function() {
-  while (this.nextTime < this.ctx.currentTime + 0.4) {
-    const mi = this.melody[this.beat % this.melody.length];
-    const bi = this.bass[Math.floor(this.beat / 2) % this.bass.length];
-    this._tone(this.freqs[mi], this.nextTime, this.tempo * 1.5);
-    if (this.beat % 2 === 0) {
-      this._tone(this.freqs[bi] * 0.5, this.nextTime, this.tempo * 2.2, 0.12);
-    }
-    this.nextTime += this.tempo;
-    this.beat++;
-  }
-  if (this.isPlaying) {
-    this.timer = setTimeout(() => this._schedule(), 100);
-  }
-};
-
-AmbientMusic.prototype.fadeOut = function(dur) {
-  this.isPlaying = false;
-  clearTimeout(this.timer);
-  if (!this.masterGain || !this.ctx) return;
-  try {
-    const now = this.ctx.currentTime;
-    this.masterGain.gain.cancelScheduledValues(now);
-    this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-    this.masterGain.gain.linearRampToValueAtTime(0, now + (dur || 2));
-  } catch(e) {}
-  setTimeout(() => { try { this.ctx.close(); } catch(e) {} }, (dur || 2) * 1000 + 300);
-  this.ctx = null; this.masterGain = null;
-};
-
-AmbientMusic.prototype.restart = function() {
-  this.fadeOut(0.1);
-  setTimeout(() => this.start(), 200);
-};
-
-/* ══════════════════════
-   MP3 다운로드 (Android 수정)
+/* ══════════════════════════════════════
+   MP3 다운로드
    iOS  → Web Share API
-   기타 → blob anchor 다운로드
-══════════════════════ */
+   기타 → blob anchor (Android 수정)
+══════════════════════════════════════ */
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 async function downloadMp3() {
   if (!rawBlob) return;
   saveBtn.disabled = true;
   saveBtn.classList.add('converting');
-  saveBtn.querySelector('.btn-text').textContent = '변환 중…';
+  saveBtn.querySelector('.bt').textContent = '변환 중…';
   try {
     const mp3Blob  = await convertToMp3(rawBlob);
     const filename = (verifiedName || '학생') + '_졸업메시지.mp3';
 
-    /* iOS Safari: Web Share API */
     if (isIOS && navigator.share) {
       try {
-        const file = new File([mp3Blob], filename, { type: 'audio/mpeg' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: filename });
+        const file = new File([mp3Blob], filename, { type:'audio/mpeg' });
+        if (navigator.canShare && navigator.canShare({ files:[file] })) {
+          await navigator.share({ files:[file], title:filename });
           return;
         }
-      } catch(e) { /* share 실패 시 anchor 다운로드로 낙하 */ }
+      } catch(e) { /* share 실패시 anchor로 낙하 */ }
     }
 
-    /* Android / PC: anchor 다운로드 */
+    // Android / PC: anchor 직접 다운로드
     const url = URL.createObjectURL(mp3Blob);
     const a   = document.createElement('a');
-    a.href     = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   } catch(err) {
@@ -479,7 +517,7 @@ async function downloadMp3() {
   } finally {
     saveBtn.disabled = false;
     saveBtn.classList.remove('converting');
-    saveBtn.querySelector('.btn-text').textContent = '⬇ MP3 저장';
+    saveBtn.querySelector('.bt').textContent = '⬇ MP3 저장';
   }
 }
 
@@ -493,23 +531,21 @@ async function convertToMp3(blob) {
   const encoder  = new lamejs.Mp3Encoder(channels, audioBuffer.sampleRate, 128);
   const toI16 = f32 => {
     const i16 = new Int16Array(f32.length);
-    for (let i = 0; i < f32.length; i++)
-      i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
+    for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i]*32767)));
     return i16;
   };
   const lI16 = toI16(audioBuffer.getChannelData(0));
   const rI16 = channels > 1 ? toI16(audioBuffer.getChannelData(1)) : lI16;
-  const parts = [];
-  const BLOCK = 1152;
-  for (let i = 0; i < lI16.length; i += BLOCK) {
-    const buf = channels > 1
-      ? encoder.encodeBuffer(lI16.subarray(i, i + BLOCK), rI16.subarray(i, i + BLOCK))
-      : encoder.encodeBuffer(lI16.subarray(i, i + BLOCK));
-    if (buf.length > 0) parts.push(new Uint8Array(buf));
+  const parts=[], BLOCK=1152;
+  for (let i=0; i<lI16.length; i+=BLOCK) {
+    const buf = channels>1
+      ? encoder.encodeBuffer(lI16.subarray(i,i+BLOCK), rI16.subarray(i,i+BLOCK))
+      : encoder.encodeBuffer(lI16.subarray(i,i+BLOCK));
+    if (buf.length>0) parts.push(new Uint8Array(buf));
   }
   const flush = encoder.flush();
-  if (flush.length > 0) parts.push(new Uint8Array(flush));
-  return new Blob(parts, { type: 'audio/mpeg' });
+  if (flush.length>0) parts.push(new Uint8Array(flush));
+  return new Blob(parts, { type:'audio/mpeg' });
 }
 </script>
 </body>
