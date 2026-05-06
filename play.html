@@ -219,6 +219,20 @@ const BGM = (() => {
       audio.play().catch(() => {});
       rampVol(0, TARGET_VOL, 500);
     },
+    pause() {
+      const audio = getEl();
+      if (!audio.paused) {
+        cancelAnimationFrame(rafId);
+        audio.pause();
+      }
+    },
+    resume() {
+      const audio = getEl();
+      if (audio.paused && audio.src) {
+        audio.play().catch(() => {});
+        rampVol(audio.volume || 0, TARGET_VOL, 600);
+      }
+    },
 
     /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
     async renderBGM(duration, sampleRate) {
@@ -441,6 +455,13 @@ player.addEventListener('error', (e) => {
 function startPlayback() {
   if (userTouched) return;
   userTouched = true;
+
+  /* Android 대응: 유저 제스처 시점에 BGM 오디오를 즉시 unlock
+     (audioReady가 false면 beginPlay()가 canplay 이벤트에서 호출되는데,
+      그 시점은 유저 제스처 바깥이라 Android가 play()를 차단함)  */
+  const bgmEl = document.getElementById('bgmAudio');
+  if (bgmEl) bgmEl.play().then(() => bgmEl.pause()).catch(() => {});
+
   overlay.classList.add('hiding');
   setTimeout(() => {
     overlay.style.display  = 'none';
@@ -482,8 +503,8 @@ seekBar.addEventListener('input',  () => {
 });
 seekBar.addEventListener('change', () => { player.currentTime=(seekBar.value/100)*player.duration; isSeeking=false; });
 
-player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; statusMsg.textContent='재생 중…'; });
-player.addEventListener('pause', () => { wave.className='waveform'; playBtn.textContent='▶'; statusMsg.textContent=''; });
+player.addEventListener('play',  () => { wave.className='waveform playing'; playBtn.textContent='■'; statusMsg.textContent='재생 중…'; BGM.resume(); });
+player.addEventListener('pause', () => { wave.className='waveform'; playBtn.textContent='▶'; statusMsg.textContent=''; BGM.pause(); });
 player.addEventListener('error', () => {
   if (audioReady) { statusMsg.className='status err'; statusMsg.textContent='음성 재생 중 오류가 발생했습니다.'; playBtn.disabled=true; }
 });
