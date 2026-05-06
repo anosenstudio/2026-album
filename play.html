@@ -361,55 +361,81 @@ if (!fileId) {
   loadAudio();
 }
 
-/* ── 오디오 로드 (Drive URL 직접 사용 — base64 인코딩 없음) ── */
+/* ── 타임아웃 fetch 헬퍼 ── */
+async function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid);
+    return res;
+  } catch(e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
+/* ── 2단계 로딩
+   Phase 1: meta (시트 조회만, ~0.5초) → 학생 정보 즉시 표시
+   Phase 2: audio (Drive b64, ~3~10초) → 오디오 로드
+────────────────────────────────────── */
 async function loadAudio() {
   try {
-    // 25초 타임아웃
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 25000);
-
-    const res  = await fetch(
-      GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId),
-      { signal: ctrl.signal }
+    /* Phase 1 ─ 메타데이터 (빠름) */
+    ovLoading.innerHTML = '<span class="ov-spin"></span>정보를 불러오는 중…';
+    const metaRes  = await fetchWithTimeout(
+      GAS_URL + '?action=meta&f=' + encodeURIComponent(fileId), 20000
     );
-    clearTimeout(tid);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '파일 로드 실패');
+    const meta = await metaRes.json();
+    if (!meta.ok) throw new Error(meta.error || '파일을 찾을 수 없습니다');
 
-    verifiedName   = data.name       || '';
-    verifiedSchool = data.school     || '';
-    dlEnabled      = data.downloadEnabled !== false;
-    const cls      = data.className  || '';
+    verifiedName   = meta.name      || '';
+    verifiedSchool = meta.school    || '';
+    dlEnabled      = meta.downloadEnabled !== false;
+    const cls      = meta.className || '';
 
-    // 메타데이터 즉시 표시
-    ovSchool.textContent    = verifiedSchool || '졸업앨범';
-    ovStudent.textContent   = [cls, verifiedName].filter(Boolean).join(' · ');
+    /* 학생 정보 즉시 표시 */
+    ovSchool.textContent  = verifiedSchool || '졸업앨범';
+    ovStudent.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
+    schoolName.textContent  = verifiedSchool || '졸업앨범';
+    studentInfo.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
+
+    /* Phase 2 ─ 오디오 데이터 (느리지만 확실) */
+    ovLoading.innerHTML = '<span class="ov-spin"></span>음성 파일 로드 중…';
+
+    const audioRes = await fetchWithTimeout(
+      GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId), 60000
+    );
+    const audioData = await audioRes.json();
+    if (!audioData.ok) throw new Error(audioData.error || '오디오 로드 실패');
+
+    /* blob URL 생성 → 오디오 세팅 */
+    const mime   = audioData.mime || 'audio/webm';
+    const binary = atob(audioData.b64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    rawBlob    = new Blob([bytes], { type: mime });
+    player.src = URL.createObjectURL(rawBlob);
+    player.load();
+
+    /* 터치 힌트 표시 */
     ovLoading.style.display = 'none';
     ovHint.style.display    = 'block';
     ovSub.style.display     = 'block';
 
-    schoolName.textContent  = verifiedSchool || '졸업앨범';
-    studentInfo.textContent = [cls, verifiedName].filter(Boolean).join(' · ');
-
-    // Drive 공개 URL을 오디오 소스로 직접 사용 (빠름!)
-    player.src = data.driveUrl;
-    player.load();
-
   } catch(err) {
     ovLoading.style.display = 'none';
-    if (err.name === 'AbortError') {
-      ovSchool.textContent  = '연결 시간 초과';
-      ovStudent.textContent = '네트워크 상태를 확인하고 다시 시도해 주세요.';
-    } else {
-      ovSchool.textContent  = '불러오기 실패';
-      ovStudent.textContent = err.message || '잠시 후 다시 시도해 주세요.';
-    }
-    // 재시도 버튼 표시
+    ovSchool.textContent    = err.name === 'AbortError' ? '연결 시간 초과' : '불러오기 실패';
+    ovStudent.textContent   = err.name === 'AbortError'
+      ? '네트워크를 확인하고 다시 시도해 주세요'
+      : (err.message || '잠시 후 다시 시도해 주세요');
     document.getElementById('ovRetry').style.display = 'block';
   }
 }
+
 function retryLoad() {
   document.getElementById('ovRetry').style.display = 'none';
+  ovLoading.innerHTML     = '<span class="ov-spin"></span>정보를 불러오는 중…';
   ovLoading.style.display = 'flex';
   ovSchool.textContent    = '';
   ovStudent.textContent   = '';
@@ -511,20 +537,10 @@ function replayAudio() {
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 async function downloadMp3() {
+  if (!rawBlob) { alert('음성 데이터가 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.'); return; }
   saveBtn.disabled = true;
   saveBtn.classList.add('converting');
   try {
-    // rawBlob이 없으면 GAS에서 lazy-fetch (MP3 변환용)
-    if (!rawBlob) {
-      saveBtn.querySelector('.bt').textContent = '불러오는 중…';
-      const res  = await fetch(GAS_URL + '?action=getAudioData&f=' + encodeURIComponent(fileId));
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '오디오 로드 실패');
-      const binary = atob(data.b64);
-      const bytes  = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      rawBlob = new Blob([bytes], { type: data.mime || 'audio/webm' });
-    }
     saveBtn.querySelector('.bt').textContent = '변환 중…';
     const mp3Blob  = await convertToMp3(rawBlob);
     const filename = (verifiedName || '학생') + '_졸업메시지.mp3';
