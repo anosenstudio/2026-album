@@ -203,8 +203,11 @@ const BGM = (() => {
   return {
     start() {
       const audio = getEl();
-      if (!audio.paused) return;
+      cancelAnimationFrame(rafId);
+      // 어떤 상태든 항상 처음부터 시작 (race condition 방지)
+      if (!audio.paused) audio.pause();
       audio.currentTime = 0;
+      audio.volume      = 0;
       audio.play().catch(() => {});
       rampVol(0, TARGET_VOL, 2500);
     },
@@ -456,22 +459,22 @@ function startPlayback() {
   if (userTouched) return;
   userTouched = true;
 
-  /* Android 대응: 유저 제스처 시점에 BGM 오디오를 즉시 unlock
-     (audioReady가 false면 beginPlay()가 canplay 이벤트에서 호출되는데,
-      그 시점은 유저 제스처 바깥이라 Android가 play()를 차단함)  */
-  const bgmEl = document.getElementById('bgmAudio');
-  if (bgmEl) bgmEl.play().then(() => bgmEl.pause()).catch(() => {});
+  /* BGM은 반드시 유저 제스처 시점에 시작 ─ Android·iOS 모두 정식 작동
+     (음성이 아직 로딩 중이어도 BGM은 즉시 재생, 음성은 canplay에서 이어 시작) */
+  BGM.start();
 
   overlay.classList.add('hiding');
   setTimeout(() => {
     overlay.style.display  = 'none';
     playerWrap.style.display = 'block';
   }, 800);
-  if (audioReady) beginPlay();
+
+  // 음성은 준비됐을 때만 재생 (아니면 canplay 이벤트에서 처리)
+  if (audioReady) player.play().catch(() => {});
 }
 
 function beginPlay() {
-  BGM.start();
+  /* canplay에서 호출 ─ BGM은 이미 startPlayback의 유저 제스처 안에서 시작됨 */
   player.play().catch(() => {});
 }
 
