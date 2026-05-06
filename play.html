@@ -228,14 +228,14 @@ const BGM = (() => {
         bgmArrayBuffer = await res.arrayBuffer();
       }
 
-      // ※ decodeAudioData는 ArrayBuffer를 detach하므로 반드시 .slice(0)으로 복제
-      const AC     = window.AudioContext || window.webkitAudioContext;
-      const tmpCtx = new AC();
-      const bgmBuf = await tmpCtx.decodeAudioData(bgmArrayBuffer.slice(0));
-      await tmpCtx.close();
-
       const sr  = sampleRate || 44100;
       const oac = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
+
+      // OfflineAudioContext로 직접 디코딩 ─ 별도 온라인 AudioContext 생성 불필요
+      // (모바일에서 AudioContext 동시 생성 수 제한 문제 방지)
+      // ※ decodeAudioData는 ArrayBuffer를 detach하므로 반드시 .slice(0)으로 복제
+      const bgmBuf = await oac.decodeAudioData(bgmArrayBuffer.slice(0));
+
       const src = oac.createBufferSource();
       src.buffer = bgmBuf;
       src.loop   = true;
@@ -573,17 +573,18 @@ async function mixAndConvertToMp3(blob) {
   const AudioCtx    = window.AudioContext || window.webkitAudioContext;
   const ctx         = new AudioCtx();
   const voiceBuffer = await ctx.decodeAudioData(arrayBuffer);
-  ctx.close();
+  await ctx.close(); // AudioContext 완전히 해제 후 renderBGM 진행 (모바일 동시 생성 수 제한 방지)
 
   const duration   = voiceBuffer.duration;
   const sampleRate = voiceBuffer.sampleRate;
 
-  /* BGM 오프라인 렌더링 (실패 시 음성만 저장) */
+  /* BGM 오프라인 렌더링 */
   let bgmBuffer = null;
   try {
     bgmBuffer = await BGM.renderBGM(duration, sampleRate);
   } catch(e) {
-    console.warn('[BGM render 실패, 음성만 저장]', e.message);
+    console.warn('[BGM render 실패]', e.message);
+    throw new Error('BGM 합성 실패: ' + e.message + '\n\n새로고침 후 다시 시도해 주세요.');
   }
 
   /* 채널 데이터 추출 */
