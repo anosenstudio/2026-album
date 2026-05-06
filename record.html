@@ -81,7 +81,7 @@ select option{background:var(--card)}
 .pw-input-wrap{position:relative}
 .pw-input-wrap input{padding-right:52px;letter-spacing:2px;font-size:18px;font-weight:600;text-align:center}
 .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px}
-.pw-error{color:var(--red);font-size:12px;text-align:center;margin-top:.625rem;min-height:18px}
+.pw-error{color:var(--red);font-size:12px;text-align:center;margin-top:.625rem;min-height:18px;white-space:pre-line}
 .pw-error.shake{animation:shake .4s ease}
 .pw-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:15px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;margin-top:1rem;transition:background .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
 .pw-btn:hover:not(:disabled){background:var(--pri-lt)}
@@ -125,7 +125,13 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
         <input id="pwInput" type="password" placeholder="비밀번호" maxlength="20"
           onkeydown="if(event.key==='Enter')checkPassword()"
           oninput="document.getElementById('pwError').textContent=''" />
-        <button class="pw-toggle" onclick="togglePwVisible()">👁</button>
+        <button class="pw-toggle" id="pwToggleBtn" onclick="togglePwVisible()" aria-label="비밀번호 표시">
+          <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="12" rx="9" ry="5.5"/>
+            <circle cx="12" cy="12" r="2.5"/>
+            <line id="eyeSlash" x1="3" y1="3" x2="21" y2="21" style="display:none"/>
+          </svg>
+        </button>
       </div>
       <div class="pw-error" id="pwError"></div>
       <button class="pw-btn" id="pwBtn" onclick="checkPassword()">
@@ -230,7 +236,12 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 
   $('pwScreen').style.display = 'block';
 
-  function togglePwVisible() { const i=$('pwInput'); i.type=i.type==='password'?'text':'password'; }
+  function togglePwVisible() {
+    const i=$('pwInput');
+    const isHidden = i.type==='password';
+    i.type = isHidden ? 'text' : 'password';
+    document.getElementById('eyeSlash').style.display = isHidden ? 'block' : 'none';
+  }
 
   async function checkPassword() {
     const pw=($('pwInput').value||'').trim();
