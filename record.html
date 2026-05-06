@@ -103,6 +103,8 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 </style>
 </head>
 <body>
+<audio id="bgm" src="./bgm_salut.mp3" preload="auto" loop style="display:none"></audio>
+
 <div class="wrap">
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxCIUMBHvu0YU77z4ULqrZAez6bue3cWi7Fzyg5slz-FdIY05K1EclHCRDUdcBoxXbPuQ/exec';
@@ -204,9 +206,9 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
         <div class="bar" style="animation-delay:.00s"></div>
       </div>
       <audio id="preview"
-        onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on')"
-        onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')"
-        onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on')">
+        onplay="$('wave').className='waveform playing';$('listenBtn').textContent='정지 ■';$('listenBtn').classList.add('on');RecBGM.play()"
+        onpause="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on');RecBGM.stop()"
+        onended="$('wave').className='waveform';$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on');RecBGM.stop()">
       </audio>
       <div class="btn-row"><button class="btn btn-listen" id="listenBtn" disabled onclick="toggleListen()">다시 듣기 ▶</button></div>
       <div class="btn-row">
@@ -230,6 +232,37 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 
 <script>
   const $ = id => document.getElementById(id);
+
+  /* ── BGM 컨트롤러 (미리듣기 전용) ── */
+  const RecBGM = (() => {
+    let rafId = null;
+    function el() { return document.getElementById('bgm'); }
+    function ramp(from, to, ms, onEnd) {
+      const audio = el();
+      cancelAnimationFrame(rafId);
+      audio.volume = from;
+      const t0 = performance.now();
+      function step(now) {
+        const p = Math.min((now - t0) / ms, 1);
+        audio.volume = from + (to - from) * p;
+        if (p < 1) { rafId = requestAnimationFrame(step); }
+        else { audio.volume = to; if (onEnd) onEnd(); }
+      }
+      rafId = requestAnimationFrame(step);
+    }
+    return {
+      play() {
+        const audio = el();
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+        ramp(0, 0.18, 1200); // 1.2초 페이드인, 녹음 목소리를 방해하지 않는 낮은 볼륨
+      },
+      stop() {
+        const audio = el();
+        ramp(audio.volume, 0, 800, () => audio.pause()); // 0.8초 페이드아웃
+      }
+    };
+  })();
   const schoolNameEl = $('schoolName');
   if (SCHOOL) { schoolNameEl.textContent = SCHOOL; }
   else { schoolNameEl.textContent='졸업앨범 녹음'; schoolNameEl.classList.add('placeholder'); $('schoolCard').style.display='block'; }
@@ -307,7 +340,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   }
   function stopRec(){if(!isRec)return;recorder.stop();isRec=false;clearInterval(timerInterval);$('recBtn').className='rec-btn';$('recBtn').textContent='⏺';$('wave').className='waveform';if(!$('status').textContent.includes('자동'))setStatus('녹음 완료 — 들어보고 마음에 들면 저장하세요');}
   function toggleListen(){const a=$('preview');if(a.paused)a.play();else{a.pause();a.currentTime=0;}}
-  function retry(){blob=null;$('preview').pause();$('preview').src='';$('listenBtn').disabled=true;$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on');$('retryBtn').disabled=true;$('saveBtn').disabled=true;$('wave').className='waveform';resetTimerUI();clearAlerts();setStatus('버튼을 눌러 다시 녹음하세요');}
+  function retry(){RecBGM.stop();blob=null;$('preview').pause();$('preview').src='';$('listenBtn').disabled=true;$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on');$('retryBtn').disabled=true;$('saveBtn').disabled=true;$('wave').className='waveform';resetTimerUI();clearAlerts();setStatus('버튼을 눌러 다시 녹음하세요');}
 
   async function save(){
     const school=SCHOOL||$('inputSchool').value.trim();

@@ -156,228 +156,89 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 </div>
 
 
+<!-- BGM 오디오 -->
+<audio id="bgmAudio" src="./bgm_salut.mp3" preload="auto" style="display:none"></audio>
+
 <!-- audio element MUST be BEFORE script (DOM ready when script runs) -->
 <audio id="player" style="display:none"></audio>
 
 <script>
 /* ════════════════════════════════════════════════
-   BGM — 따뜻하고 가벼운 G장조 피아노
-   G major · BPM 76 · 아르페지오 반주 · 저작권 없음
+   BGM — 엘가 사랑의 인사 (Salut d'Amour, Op.12)
+   MP3 파일 기반 재생 · 저작권 없는 연주 녹음
 ════════════════════════════════════════════════ */
 const BGM = (() => {
-  let ac = null, master = null, on = false, loopTimer = null;
+  let el = null, rafId = null;
+  const TARGET_VOL = 0.50; // 재생 볼륨 (0~1)
 
-  const B = 60 / 76; // 1박 ≈ 0.789초
-
-  // G장조 음표
-  const G2=98, D3=146.83, G3=196, A3=220, B3=246.94,
-        C4=261.63, D4=293.66, E4=329.63, F4s=369.99, G4=392,
-        A4=440, B4=493.88, C5=523.25, D5=587.33, E5=659.25,
-        F5s=739.99, G5=783.99;
-
-  // ── 멜로디 [주파수, 시작박, 길이박, 볼륨] ──
-  // G-Em-C-D 코드 진행, 밝고 따뜻한 선율
-  const MEL = [
-    // Bar 1 — G (가볍게 도입)
-    [D5, 0,   .75, .45], [B4, .75, .25, .38],
-    [G4, 1,   1.0, .44], [B4, 2,   .75, .44],
-    [D5, 2.75,.25, .40], [G4, 3,   1.0, .40],
-    // Bar 2 — Em (따뜻한 울림)
-    [E5, 4,  1.0,  .50], [D5, 5,  .5,  .42],
-    [C5, 5.5,.5,   .40], [B4, 6,  2.0, .48],
-    // Bar 3 — C (밝게 오름)
-    [C5, 8,  .75,  .46], [D5, 8.75,.25,.40],
-    [E5, 9,  1.0,  .50], [D5, 10, .5,  .44],
-    [C5, 10.5,.5,  .42], [B4, 11, 1.0, .44],
-    // Bar 4 — D (긴장감)
-    [A4, 12, 1.0,  .44], [F4s,13, .5,  .42],
-    [A4, 13.5,.5,  .42], [D5, 14, 2.0, .52],
-    // Bar 5 — G (고조)
-    [G4, 16, .5,   .44], [A4, 16.5,.5, .44],
-    [B4, 17, .5,   .48], [D5, 17.5,.5, .48],
-    [G5, 18, 1.0,  .58], [E5, 19, 1.0, .50], // 피크
-    // Bar 6 — Em (서정적)
-    [E5, 20, 1.0,  .52], [D5, 21, .5,  .44],
-    [C5, 21.5,.5,  .42], [B4, 22, .75, .46],
-    [A4, 22.75,.25,.38], [G4, 23, 1.0, .44],
-    // Bar 7 — C-D (해결 빌드업)
-    [C5, 24, .75,  .46], [B4, 24.75,.25,.40],
-    [A4, 25, .5,   .42], [B4, 25.5,.5, .44],
-    [C5, 26, .5,   .46], [D5, 26.5,.5, .48],
-    [E5, 27, 1.0,  .50],
-    // Bar 8 — G (평화로운 종지)
-    [D5, 28, .5,   .46], [B4, 28.5,.5, .44],
-    [G4, 29, 1.0,  .44], [B4, 30, 1.0, .40],
-    [G4, 31, 2.5,  .44], // 롱 홀드
-  ];
-  const LOOP = 33.5 * B;
-
-  // ── 아르페지오 반주 [코드음배열, 시작박, 반복박수] ──
-  // 4분음표마다 코드 아르페지오 (업, ↑↑↓ 패턴)
-  const ARPS = [
-    // G 코드
-    [[G3,B3,D4,G4], 0,  4],
-    // Em
-    [[164.81,G3,B3,E4], 4, 4],
-    // C
-    [[C4*.5,G3,C4,E4], 8, 4], // C3=130.81
-    // D
-    [[D3,F4s*.5,A3,D4], 12, 4], // F#3=185
-    // G
-    [[G3,B3,D4,G4], 16, 4],
-    // Em
-    [[164.81,G3,B3,329.63], 20, 4],
-    // C
-    [[130.81,G3,C4,E4], 24, 4],
-    // D
-    [[D3,184.99,A3,D4], 28, 3.5],
-  ];
-
-  function note(freq, time, dur, vol, type='sine') {
-    if (!freq || freq < 20) return;
-    const o = ac.createOscillator(), g = ac.createGain();
-    const o2 = ac.createOscillator(), g2 = ac.createGain();
-    o.type = type; o.frequency.value = freq;
-    o2.type = 'triangle'; o2.frequency.value = freq * 2; g2.gain.value = .08;
-    o.connect(g); o2.connect(g2); g2.connect(g);
-    g.connect(master);
-    const v = Math.min(vol, 0.9);
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(v, time + .022);
-    g.gain.setValueAtTime(v * .6, time + Math.min(.14, dur*.3));
-    g.gain.exponentialRampToValueAtTime(.0001, time + dur);
-    const end = time + dur + .05;
-    o.start(time); o.stop(end); o2.start(time); o2.stop(end);
+  function getEl() {
+    if (!el) {
+      el = document.getElementById('bgmAudio');
+      el.volume = 0;
+      el.loop   = true;
+    }
+    return el;
   }
 
-  function pad(freq, time, dur, vol) {
-    if (!freq || freq < 20) return;
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'sine'; o.frequency.value = freq;
-    o.connect(g); g.connect(master);
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(vol, time + .35);
-    g.gain.setValueAtTime(vol * .8, time + dur - .35);
-    g.gain.linearRampToValueAtTime(0, time + dur);
-    o.start(time); o.stop(time + dur + .05);
-  }
-
-  function schedule(t0) {
-    // 멜로디
-    MEL.forEach(([f,sb,db,v]) => note(f, t0+sb*B, db*B, v));
-    // 아르페지오 반주
-    ARPS.forEach(([chord, sb, beats]) => {
-      const n = chord.length;
-      for (let b = 0; b < beats; b++) {
-        const t = t0 + (sb + b) * B;
-        // 4음 아르페지오: 1-2-3-4 pattern, 16분음표
-        chord.forEach((f, i) => pad(f, t + i*(B/4), B/4+.05, i===0?.10:.06));
-      }
-    });
-    // 베이스 (루트음, 낮고 부드럽게)
-    [[G2,0,3.8,.14],[G2*.75,4,3.8,.12],[130.81*.5,8,3.8,.12],[D3*.5,12,3.8,.12],
-     [G2,16,3.8,.14],[G2*.75,20,3.8,.12],[130.81*.5,24,3.8,.12],[D3*.5,28,3.5,.10]
-    ].forEach(([f,sb,db,v]) => pad(f, t0+sb*B, db*B, v));
+  function rampVol(from, to, durationMs, onEnd) {
+    const audio = getEl();
+    cancelAnimationFrame(rafId);
+    audio.volume = from;
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / durationMs, 1);
+      audio.volume = from + (to - from) * t;
+      if (t < 1) { rafId = requestAnimationFrame(step); }
+      else { audio.volume = to; if (onEnd) onEnd(); }
+    }
+    rafId = requestAnimationFrame(step);
   }
 
   return {
     start() {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC || on) return;
-      try {
-        ac = new AC();
-        if (ac.state === 'suspended') ac.resume();
-        master = ac.createGain();
-        master.gain.setValueAtTime(0, ac.currentTime);
-        master.gain.linearRampToValueAtTime(.55, ac.currentTime + 2.5); // 부드러운 페이드인
-
-        // 가벼운 리버브 (딜레이 짧게, 피드백 낮게)
-        const dry = ac.createGain(); dry.gain.value = .72;
-        const dly = ac.createDelay(.6); dly.delayTime.value = .18;
-        const fb  = ac.createGain(); fb.gain.value = .28;
-        const lpf = ac.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=3200;
-        const wet = ac.createGain(); wet.gain.value = .28;
-        master.connect(dry); dry.connect(ac.destination);
-        master.connect(dly); dly.connect(lpf); lpf.connect(fb); fb.connect(dly);
-        dly.connect(wet); wet.connect(ac.destination);
-
-        on = true;
-        schedule(ac.currentTime + .1);
-        function loop() {
-          if (!on || !ac) return;
-          schedule(ac.currentTime + .4);
-          loopTimer = setTimeout(loop, LOOP * 1000);
-        }
-        loopTimer = setTimeout(loop, LOOP * 1000);
-      } catch(e) { console.warn('BGM:', e); }
+      const audio = getEl();
+      if (!audio.paused) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      rampVol(0, TARGET_VOL, 2500); // 2.5초 페이드인
     },
-    fadeOut(dur=2.5) {
-      on = false; clearTimeout(loopTimer);
-      if (!master || !ac) return;
-      try {
-        const now = ac.currentTime;
-        master.gain.cancelScheduledValues(now);
-        master.gain.setValueAtTime(master.gain.value, now);
-        master.gain.linearRampToValueAtTime(0, now + dur);
-      } catch(e) {}
-      setTimeout(() => { try { ac.close(); } catch(e) {} ac=null; master=null; }, (dur+.3)*1000);
+    fadeOut(dur = 2.5) {
+      const audio = getEl();
+      rampVol(audio.volume, 0, dur * 1000, () => audio.pause());
     },
-    restart() { this.fadeOut(.1); setTimeout(() => this.start(), 250); },
+    restart() {
+      const audio = getEl();
+      cancelAnimationFrame(rafId);
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      rampVol(0, TARGET_VOL, 500); // 재시작은 빠르게 페이드인
+    },
 
-    /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
+    /* ── 오프라인 렌더링: MP3를 AudioBuffer로 디코딩 후 반환 ── */
     async renderBGM(duration, sampleRate) {
+      const audio  = getEl();
+      const res    = await fetch(audio.src);
+      const arrBuf = await res.arrayBuffer();
+
+      // MP3 디코딩
+      const AC      = window.AudioContext || window.webkitAudioContext;
+      const tmpCtx  = new AC();
+      const bgmBuf  = await tmpCtx.decodeAudioData(arrBuf);
+      await tmpCtx.close();
+
       const sr  = sampleRate || 44100;
       const oac = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
-
-      const lmaster = oac.createGain(); lmaster.gain.value = .55;
-      const ldry = oac.createGain(); ldry.gain.value = .72;
-      const ldly = oac.createDelay(.6); ldly.delayTime.value = .18;
-      const lfb  = oac.createGain(); lfb.gain.value = .28;
-      const llpf = oac.createBiquadFilter(); llpf.type='lowpass'; llpf.frequency.value=3200;
-      const lwet = oac.createGain(); lwet.gain.value = .28;
-      lmaster.connect(ldry); ldry.connect(oac.destination);
-      lmaster.connect(ldly); ldly.connect(llpf); llpf.connect(lfb); lfb.connect(ldly);
-      ldly.connect(lwet); lwet.connect(oac.destination);
-
-      function lnote(freq, time, dur, vol, type='sine') {
-        if (!freq || freq < 20) return;
-        const o=oac.createOscillator(), g=oac.createGain();
-        const o2=oac.createOscillator(), g2=oac.createGain();
-        o.type=type; o.frequency.value=freq;
-        o2.type='triangle'; o2.frequency.value=freq*2; g2.gain.value=.08;
-        o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lmaster);
-        const v=Math.min(vol,.9);
-        g.gain.setValueAtTime(0,time);
-        g.gain.linearRampToValueAtTime(v,time+.022);
-        g.gain.setValueAtTime(v*.6,time+Math.min(.14,dur*.3));
-        g.gain.exponentialRampToValueAtTime(.0001,time+dur);
-        const end=time+dur+.05; o.start(time); o.stop(end); o2.start(time); o2.stop(end);
-      }
-      function lpad(freq, time, dur, vol) {
-        if (!freq || freq < 20) return;
-        const o=oac.createOscillator(), g=oac.createGain();
-        o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(lmaster);
-        const fade = Math.min(.35, dur * .4);  // 음표 길이에 맞게 페이드 조정
-        g.gain.setValueAtTime(0, time);
-        g.gain.linearRampToValueAtTime(vol, time + fade);
-        if (dur > fade * 2.2) g.gain.setValueAtTime(vol * .8, time + dur - fade);
-        g.gain.linearRampToValueAtTime(0, time + dur);
-        o.start(time); o.stop(time + dur + .05);
-      }
-      function lschedule(t0) {
-        MEL.forEach(([f,sb,db,v]) => lnote(f, t0+sb*B, db*B, v));
-        ARPS.forEach(([chord, sb, beats]) => {
-          for (let b=0; b<beats; b++) {
-            const t=t0+(sb+b)*B;
-            chord.forEach((f,i) => lpad(f, t+i*(B/4), B/4+.05, i===0?.10:.06));
-          }
-        });
-        [[G2,0,3.8,.14],[G2*.75,4,3.8,.12],[130.81*.5,8,3.8,.12],[D3*.5,12,3.8,.12],
-         [G2,16,3.8,.14],[G2*.75,20,3.8,.12],[130.81*.5,24,3.8,.12],[D3*.5,28,3.5,.10]
-        ].forEach(([f,sb,db,v]) => lpad(f, t0+sb*B, db*B, v));
-      }
-      let t = .1;
-      while (t < duration + 2) { lschedule(t); t += LOOP; }
+      const src = oac.createBufferSource();
+      src.buffer = bgmBuf;
+      src.loop   = true;
+      const gain = oac.createGain();
+      gain.gain.value = TARGET_VOL;
+      src.connect(gain);
+      gain.connect(oac.destination);
+      src.start(0);
+      src.stop(duration);
       return oac.startRendering();
     }
   };
