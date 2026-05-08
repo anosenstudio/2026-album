@@ -156,8 +156,8 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 </div>
 
 
-<!-- BGM 오디오 -->
-<audio id="bgmAudio" src="./bgm_salut.mp3" preload="auto" style="display:none"></audio>
+<!-- BGM 오디오 (라이브 재생용 — 저장은 사전 디코딩된 AudioBuffer 사용) -->
+<audio id="bgmAudio" src="./bgm_salut.mp3?v=20260507" preload="auto" style="display:none"></audio>
 
 <!-- audio element MUST be BEFORE script (DOM ready when script runs) -->
 <audio id="player" style="display:none"></audio>
@@ -170,20 +170,60 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 const BGM = (() => {
   let el = null, rafId = null;
   const TARGET_VOL = 0.50;
-  const BGM_SRC    = './bgm_salut.mp3';
+  const BGM_SRC    = './bgm_salut.mp3?v=20260507'; // 캐시 무효화 (코드 업데이트 시 버전 변경)
 
-  /* ── 페이지 로드 시 MP3를 ArrayBuffer로 사전 로딩 ──
-     decodeAudioData()는 ArrayBuffer를 소비(detach)하므로
-     renderBGM 호출마다 .slice(0)으로 복제해서 사용한다 */
-  let bgmArrayBuffer = null;
-  let bgmDecoded     = null; // 디코딩된 AudioBuffer 캐시 (재시도 안정성 + 속도)
-  fetch(BGM_SRC)
-    .then(r => r.arrayBuffer())
-    .then(ab => { bgmArrayBuffer = ab; })
-    .catch(e => console.warn('[BGM preload 실패]', e));
+  /* ── 페이지 로드 시 BGM을 fetch + 디코딩까지 완료해두기 ──
+     • 저장 시점에 디코딩하지 않으므로 슬라이드바 끊김 없음
+     • iOS Safari 콜백 형식 fallback 포함
+     • 디코딩된 AudioBuffer는 컨텍스트 간 재사용 가능 */
+  let bgmDecoded    = null;
+  let bgmLoadError  = null;
+  let bgmLoadStatus = 'pending';
+
+  function decodeCompat(ctx, arrayBuffer) {
+    // Promise 형식과 콜백 형식 모두 지원 (구형 iOS Safari 호환)
+    return new Promise((resolve, reject) => {
+      try {
+        const ret = ctx.decodeAudioData(arrayBuffer, resolve, reject);
+        if (ret && typeof ret.then === 'function') ret.then(resolve, reject);
+      } catch(e) { reject(e); }
+    });
+  }
+
+  (async () => {
+    try {
+      const res = await fetch(BGM_SRC);
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' (파일 경로/업로드 확인)');
+      const ab = await res.arrayBuffer();
+      if (ab.byteLength < 1000) throw new Error('파일 크기 비정상: ' + ab.byteLength + ' bytes');
+
+      const AC  = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AC();
+      bgmDecoded = await decodeCompat(ctx, ab);
+      try { await ctx.close(); } catch(e) {}
+
+      bgmLoadStatus = 'ok';
+      console.log('[BGM 사전 디코딩 완료]', bgmDecoded.duration.toFixed(1) + 's, ' + bgmDecoded.sampleRate + 'Hz');
+    } catch(e) {
+      bgmLoadError  = e;
+      bgmLoadStatus = 'failed';
+      console.error('[BGM 사전 로딩 실패]', e);
+    }
+  })();
 
   function getEl() {
-    if (!el) { el = document.getElementById('bgmAudio'); el.volume = 0; el.loop = true; }
+    if (!el) {
+      el = document.getElementById('bgmAudio');
+      el.volume = 0;
+      el.loop   = true;
+      // 에러 진단용 로깅 (Android에서 라이브 재생 안 될 때 원인 파악)
+      el.addEventListener('error', () => {
+        console.error('[BGM audio element 에러]', el.error);
+      });
+      el.addEventListener('canplay', () => {
+        console.log('[BGM audio element 재생 준비 완료]');
+      });
+    }
     return el;
   }
 
@@ -238,28 +278,27 @@ const BGM = (() => {
       }
     },
 
-    /* ── 오프라인 렌더링: BGM을 AudioBuffer로 반환 ── */
+    /* ── 오프라인 렌더링: 사전 디코딩된 BGM을 음성 길이만큼 잘라서 반환 ──
+       페이지 로드 시 이미 디코딩 완료 상태이므로 여기선 렌더링만 (가벼움) */
     async renderBGM(duration, sampleRate) {
-      // 디코딩 결과 캐시가 없으면 처음 한 번만 디코딩
-      if (!bgmDecoded) {
-        if (!bgmArrayBuffer) {
-          const res = await fetch(BGM_SRC);
-          bgmArrayBuffer = await res.arrayBuffer();
+      // 사전 디코딩 결과 확인
+      if (bgmLoadStatus === 'pending') {
+        // 아직 로딩 중이면 최대 5초 대기
+        const start = Date.now();
+        while (bgmLoadStatus === 'pending' && Date.now() - start < 5000) {
+          await new Promise(r => setTimeout(r, 100));
         }
-
-        // ⚠️ iOS Safari는 OfflineAudioContext.decodeAudioData() 미지원
-        //     반드시 일반 AudioContext로 디코딩해야 함
-        // ※ decodeAudioData는 ArrayBuffer를 detach하므로 .slice(0)으로 복제
-        const AC     = window.AudioContext || window.webkitAudioContext;
-        const tmpCtx = new AC();
-        bgmDecoded   = await tmpCtx.decodeAudioData(bgmArrayBuffer.slice(0));
-        await tmpCtx.close();
+      }
+      if (bgmLoadStatus !== 'ok') {
+        throw new Error(bgmLoadError
+          ? 'BGM 파일 로딩 실패 — ' + bgmLoadError.message
+          : 'BGM 로딩 시간 초과');
       }
 
       const sr  = sampleRate || 44100;
       const oac = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
       const src = oac.createBufferSource();
-      src.buffer = bgmDecoded;  // 캐시된 AudioBuffer 사용 (BufferSource가 샘플레이트 자동 변환)
+      src.buffer = bgmDecoded;
       src.loop   = true;
       const gain = oac.createGain();
       gain.gain.value = TARGET_VOL;
