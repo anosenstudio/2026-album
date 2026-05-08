@@ -696,6 +696,11 @@ function replayAudio() {
    기타           → blob anchor 직접 다운로드
 ══════════════════════════════════════ */
 
+/* ── 디바이스 감지 — Android는 BGM 합성 건너뛰고 원본 음성으로 저장 ──
+   안드로이드는 decodeAudioData가 webm/opus에서 hang하는 케이스가 잦아서
+   변환 시도 자체를 안 하는 게 가장 안정적 */
+const isAndroid = /Android/i.test(navigator.userAgent);
+
 async function downloadMp3() {
   saveBtn.disabled = true;
   saveBtn.classList.add('converting');
@@ -711,42 +716,51 @@ async function downloadMp3() {
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       rawBlob = new Blob([bytes], { type: d.mime || 'audio/webm' });
     }
-    saveBtn.querySelector('.bt').textContent = 'BGM 합성 중…';
 
-    /* ── MP3 변환 시도 → 실패 시 원본 파일로 저장 fallback ──
-       안드로이드 Chrome은 webm/opus를 decodeAudioData()로 디코딩 못하는 경우가 있음
-       → 변환 자체가 실패해도 사용자는 원본 파일이라도 받을 수 있어야 함 */
     let finalBlob, fileExt, fileMime;
     let bgmFailed = false;
-    let mp3Failed = false;
+    let savedAsRaw = false;
 
-    try {
-      // 30초 타임아웃 — 안드로이드에서 decodeAudioData가 hang 하는 경우 강제 fallback
-      const result = await Promise.race([
-        mixAndConvertToMp3(rawBlob),
-        new Promise(function(_, reject) {
-          setTimeout(function() { reject(new Error('MP3 변환 시간 초과 (30초)')); }, 30000);
-        })
-      ]);
-      finalBlob = result.blob;
-      fileExt   = 'mp3';
-      fileMime  = 'audio/mpeg';
-      bgmFailed = result.bgmFailed;
-    } catch(convErr) {
-      console.warn('[MP3 변환 실패 → 원본 음성 파일로 저장]', convErr && convErr.message);
-      mp3Failed = true;
-      finalBlob = rawBlob;
-      const m = (rawBlob.type || 'audio/webm').toLowerCase();
-      fileMime = m;
-      if (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1)      fileExt = 'm4a';
+    /* ── 분기: Android는 변환 건너뛰고 원본 그대로, 나머지는 MP3+BGM 시도 ── */
+    if (isAndroid) {
+      saveBtn.querySelector('.bt').textContent = '저장 준비 중…';
+      savedAsRaw = true;
+      finalBlob  = rawBlob;
+      const m    = (rawBlob.type || 'audio/webm').toLowerCase();
+      fileMime   = m;
+      if      (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1) fileExt = 'm4a';
       else if (m.indexOf('ogg') !== -1)                            fileExt = 'ogg';
       else                                                          fileExt = 'webm';
+    } else {
+      saveBtn.querySelector('.bt').textContent = 'BGM 합성 중…';
+      try {
+        // 30초 타임아웃 — 만일을 대비
+        const result = await Promise.race([
+          mixAndConvertToMp3(rawBlob),
+          new Promise(function(_, reject) {
+            setTimeout(function() { reject(new Error('MP3 변환 시간 초과 (30초)')); }, 30000);
+          })
+        ]);
+        finalBlob = result.blob;
+        fileExt   = 'mp3';
+        fileMime  = 'audio/mpeg';
+        bgmFailed = result.bgmFailed;
+      } catch(convErr) {
+        console.warn('[MP3 변환 실패 → 원본 음성 파일로 저장]', convErr && convErr.message);
+        savedAsRaw = true;
+        finalBlob  = rawBlob;
+        const m    = (rawBlob.type || 'audio/webm').toLowerCase();
+        fileMime   = m;
+        if      (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1) fileExt = 'm4a';
+        else if (m.indexOf('ogg') !== -1)                            fileExt = 'ogg';
+        else                                                          fileExt = 'webm';
+      }
     }
 
     const filename = (verifiedName || '학생') + '_졸업메시지.' + fileExt;
     saveBtn.querySelector('.bt').textContent = '저장 중…';
 
-    /* ── iOS · Android: Web Share API (카카오톡·문자 등 공유 가능) ── */
+    /* ── 모바일: Web Share API (카카오톡·문자 등 공유) ── */
     let shared = false;
     if (navigator.share) {
       try {
@@ -758,7 +772,7 @@ async function downloadMp3() {
       } catch(e) { /* 공유 취소 또는 미지원 → anchor로 낙하 */ }
     }
 
-    /* ── PC / 공유 미지원 환경: 직접 다운로드 ── */
+    /* ── PC / 공유 미지원: 직접 다운로드 ── */
     if (!shared) {
       const url = URL.createObjectURL(finalBlob);
       const a   = document.createElement('a');
@@ -768,10 +782,11 @@ async function downloadMp3() {
       setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
     }
 
-    /* ── 사용자 안내 (저장 후) ── */
-    if (mp3Failed) {
+    /* ── 안내 메시지 (필요한 경우만) ── */
+    if (savedAsRaw && !isAndroid) {
+      // PC/iOS에서 변환 실패한 케이스만 안내 (안드로이드는 정상 동작이므로 안내 불필요)
       setTimeout(function() {
-        alert('이 기기에서 MP3 변환이 어려워 원본 음성 파일로 저장됐어요.\n파일은 정상 재생됩니다.');
+        alert('MP3 변환이 어려워 원본 음성 파일로 저장됐어요.\n파일은 정상 재생됩니다.');
       }, 300);
     } else if (bgmFailed) {
       setTimeout(function() {
