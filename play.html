@@ -156,8 +156,11 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 </div>
 
 
-<!-- BGM 오디오 (라이브 재생용 — 저장은 사전 디코딩된 AudioBuffer 사용) -->
-<audio id="bgmAudio" src="./bgm_salut.mp3?v=20260508" preload="auto" style="display:none"></audio>
+<!-- BGM 오디오 (라이브 재생용 — 저장은 사전 디코딩된 AudioBuffer 사용)
+     style="display:none"은 일부 안드로이드 인앱 브라우저에서 audio 로드를 막음
+     → 화면 밖 absolute 배치로 보이지 않게 처리 -->
+<audio id="bgmAudio" src="./bgm_salut.mp3?v=20260508" preload="auto"
+       style="position:absolute;left:-9999px;width:1px;height:1px"></audio>
 
 <!-- audio element MUST be BEFORE script (DOM ready when script runs) -->
 <audio id="player" style="display:none"></audio>
@@ -282,18 +285,26 @@ const BGM = (() => {
   return {
     start() {
       /* 사용자 제스처 시점 — 백그라운드 디코딩 시작 (라이브 재생과 병행) */
-      ensureDecoded().catch(e => {
-        const msg = (e && e.message) ? e.message : String(e);
+      ensureDecoded().catch(function(e) {
+        var msg = (e && e.message) ? e.message : String(e);
         console.warn('[BGM 백그라운드 디코딩 실패]', msg);
       });
 
-      const audio = getEl();
+      var audio = getEl();
       cancelAnimationFrame(rafId);
-      // 어떤 상태든 항상 처음부터 시작 (race condition 방지)
-      if (!audio.paused) audio.pause();
-      audio.currentTime = 0;
-      audio.volume      = 0;
-      audio.play().catch(() => {});
+      audio.volume = 0;
+
+      /* 안드로이드 Chrome은 pause() 직후 play() 호출 시
+         "play() interrupted by pause()" 로 Promise rejection 발생 가능
+         → 일시정지 상태가 아닐 때만 currentTime 리셋, 재생은 그대로 */
+      try { audio.currentTime = 0; } catch (e) {}
+      var p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function(e) {
+          var msg = (e && e.message) ? e.message : String(e);
+          console.warn('[BGM play 실패]', msg);
+        });
+      }
       rampVol(0, TARGET_VOL, 2500);
     },
     fadeOut(dur = 2.5) {
@@ -466,7 +477,7 @@ async function loadAudioFallback() {
       GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId), 90000
     );
     const data = await res.json();
-    console.log('[Fallback] mime:', data?.mime, 'b64 len:', data?.b64?.length);
+    console.log('[Fallback] mime:', data && data.mime, 'b64 len:', (data && data.b64) ? data.b64.length : 0);
     if (!data || !data.ok) throw new Error((data && data.error) || '오디오 로드 실패');
 
     const mime   = data.mime || 'audio/webm';
