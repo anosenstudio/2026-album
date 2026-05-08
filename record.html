@@ -345,6 +345,33 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   function toggleListen(){const a=$('preview');if(a.paused)a.play();else{a.pause();a.currentTime=0;}}
   function retry(){RecBGM.stop();blob=null;$('preview').pause();$('preview').src='';$('listenBtn').disabled=true;$('listenBtn').textContent='다시 듣기 ▶';$('listenBtn').classList.remove('on');$('retryBtn').disabled=true;$('saveBtn').disabled=true;$('wave').className='waveform';resetTimerUI();clearAlerts();setStatus('버튼을 눌러 다시 녹음하세요');}
 
+  /* 네트워크 오류·GAS 콜드 스타트 대비: 자동 재시도 (최대 3회, 지수 백오프) */
+  async function uploadWithRetry(payload, maxAttempts) {
+    var attempts = maxAttempts || 3;
+    var lastErr = null;
+    for (var i = 0; i < attempts; i++) {
+      try {
+        if (i > 0) {
+          setStatus('네트워크 재시도 중… (' + (i+1) + '/' + attempts + ')');
+          await new Promise(function(r){ setTimeout(r, 1500 * i); }); // 1.5s, 3s 대기
+        }
+        var res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload),
+          redirect: 'follow'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch(e) {
+        lastErr = e;
+        // ALREADY_SUBMITTED 같은 정상 응답 에러는 재시도 무의미 → 마지막 시도에서 throw
+        if (i === attempts - 1) throw lastErr;
+      }
+    }
+    throw lastErr;
+  }
+
   async function save(){
     const school=SCHOOL||$('inputSchool').value.trim();
     const name=$('inputName').value.trim();
@@ -357,8 +384,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
     $('listenBtn').disabled=true;$('saveBtn').disabled=true;$('retryBtn').disabled=true;
     try{
       const base64=await toBase64(blob);
-      const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({school,name,className,audioBase64:base64,mimeType}),redirect:'follow'});
-      const data=await res.json();
+      const data = await uploadWithRetry({school,name,className,audioBase64:base64,mimeType});
       $('alertLoad').style.display='none';
       if(data.success){
         $('formWrap').style.display='none';$('doneTitle').textContent=name+'님의 목소리가 저장됐어요!';$('done').style.display='block';
