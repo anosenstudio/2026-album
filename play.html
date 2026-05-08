@@ -696,9 +696,9 @@ function replayAudio() {
    기타           → blob anchor 직접 다운로드
 ══════════════════════════════════════ */
 
-/* ── 디바이스 감지 — Android는 BGM 합성 건너뛰고 원본 음성으로 저장 ──
-   안드로이드는 decodeAudioData가 webm/opus에서 hang하는 케이스가 잦아서
-   변환 시도 자체를 안 하는 게 가장 안정적 */
+/* ── 디바이스 감지 ──
+   Android Chrome의 decodeAudioData는 webm/opus를 디코딩하지 못해 hang하지만,
+   m4a/AAC는 정상 처리 가능. 따라서 디바이스+입력형식 조합으로 분기 결정 */
 const isAndroid = /Android/i.test(navigator.userAgent);
 
 async function downloadMp3() {
@@ -721,20 +721,27 @@ async function downloadMp3() {
     let bgmFailed = false;
     let savedAsRaw = false;
 
-    /* ── 분기: Android는 변환 건너뛰고 원본 그대로, 나머지는 MP3+BGM 시도 ── */
-    if (isAndroid) {
+    /* ── 입력 형식 기반 분기 ──
+       Android + webm/opus 조합만 위험 → BGM 합성 건너뛰기
+       그 외 (Android + m4a, iOS, PC 등 모두) → MP3 + BGM 합성 시도 */
+    const inMime = (rawBlob.type || '').toLowerCase();
+    const isWebmInput = inMime.indexOf('webm') !== -1 || inMime.indexOf('opus') !== -1;
+    const skipConversion = isAndroid && isWebmInput;
+
+    if (skipConversion) {
+      // 구형 안드로이드 호환: 변환 건너뛰고 원본 그대로
       saveBtn.querySelector('.bt').textContent = '저장 준비 중…';
       savedAsRaw = true;
       finalBlob  = rawBlob;
-      const m    = (rawBlob.type || 'audio/webm').toLowerCase();
-      fileMime   = m;
-      if      (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1) fileExt = 'm4a';
-      else if (m.indexOf('ogg') !== -1)                            fileExt = 'ogg';
-      else                                                          fileExt = 'webm';
+      fileMime   = inMime;
+      if      (inMime.indexOf('mp4') !== -1 || inMime.indexOf('m4a') !== -1) fileExt = 'm4a';
+      else if (inMime.indexOf('ogg') !== -1)                                  fileExt = 'ogg';
+      else                                                                    fileExt = 'webm';
     } else {
+      // BGM 합성 시도 (모든 경우, m4a 입력의 안드로이드도 포함)
       saveBtn.querySelector('.bt').textContent = 'BGM 합성 중…';
       try {
-        // 30초 타임아웃 — 만일을 대비
+        // 30초 타임아웃 — 안전망
         const result = await Promise.race([
           mixAndConvertToMp3(rawBlob),
           new Promise(function(_, reject) {
@@ -746,14 +753,14 @@ async function downloadMp3() {
         fileMime  = 'audio/mpeg';
         bgmFailed = result.bgmFailed;
       } catch(convErr) {
+        // 변환 실패 시 원본으로 fallback
         console.warn('[MP3 변환 실패 → 원본 음성 파일로 저장]', convErr && convErr.message);
         savedAsRaw = true;
         finalBlob  = rawBlob;
-        const m    = (rawBlob.type || 'audio/webm').toLowerCase();
-        fileMime   = m;
-        if      (m.indexOf('mp4') !== -1 || m.indexOf('m4a') !== -1) fileExt = 'm4a';
-        else if (m.indexOf('ogg') !== -1)                            fileExt = 'ogg';
-        else                                                          fileExt = 'webm';
+        fileMime   = inMime || 'audio/webm';
+        if      (fileMime.indexOf('mp4') !== -1 || fileMime.indexOf('m4a') !== -1) fileExt = 'm4a';
+        else if (fileMime.indexOf('ogg') !== -1)                                    fileExt = 'ogg';
+        else                                                                        fileExt = 'webm';
       }
     }
 

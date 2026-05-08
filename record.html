@@ -299,9 +299,12 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
 
   function enterRecordScreen() { $('pwScreen').style.display='none'; $('formWrap').style.display='block'; }
 
-  let recorder=null,chunks=[],isRec=false,timerInterval=null,secs=0,blob=null,mimeType='audio/webm';
-  const MIMES=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+  let recorder=null,chunks=[],isRec=false,timerInterval=null,secs=0,blob=null,mimeType='audio/mp4';
+  /* ★ MP4/AAC 우선 — 모든 기기(iPhone, Android, PC, KakaoTalk)에서 재생 가능
+     기기가 MP4 녹음 미지원 시 webm/opus로 자동 fallback (구형 안드로이드만 해당) */
+  const MIMES=['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/aac','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
   for(const m of MIMES){if(MediaRecorder.isTypeSupported(m)){mimeType=m;break;}}
+  console.log('[녹음 형식 선택]', mimeType);
   const pad=n=>String(n).padStart(2,'0');
 
   function tick(){
