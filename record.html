@@ -165,7 +165,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
       <div class="card-title">학생 정보</div>
       <div class="field">
         <label class="lbl">이름</label>
-        <input id="inputName" type="text" placeholder="예: 홍길동" />
+        <input id="inputName" type="text" placeholder="예: 홍길동" autocomplete="off" />
       </div>
       <div class="field" style="margin-bottom:0">
         <label class="lbl">반 · 번호</label>
@@ -401,6 +401,14 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
   function setStatus(msg){$('status').textContent=msg;}
   function showErr(msg){$('alertErr').innerHTML=msg;$('alertErr').style.display='block';}
   function clearAlerts(){['alertErr','alertLoad'].forEach(id=>$(id).style.display='none');}
+
+  /* 녹음 완료 후 저장 전 이탈 방지 */
+  window.addEventListener('beforeunload', e => {
+    if (blob && $('formWrap').style.display !== 'none') {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 </script>
 </body>
 </html>

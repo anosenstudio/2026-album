@@ -84,8 +84,26 @@ function doGet(e) {
     if (!school || !pw) return makeJson({ ok: false });
     var pwRows = getPwSheet().getDataRange().getValues();
     for (var k = 1; k < pwRows.length; k++) {
-      if (String(pwRows[k][0]).trim() === school)
-        return makeJson({ ok: String(pwRows[k][1]).trim() === pw.trim() });
+      if (String(pwRows[k][0]).trim() === school) {
+        // 비밀번호 확인
+        var pwOk = String(pwRows[k][1]).trim() === pw.trim();
+        if (!pwOk) return makeJson({ ok: false });
+        // 기간 검증
+        var startDate = pwRows[k][3] ? String(pwRows[k][3]).trim() : '';
+        var endDate   = pwRows[k][4] ? String(pwRows[k][4]).trim() : '';
+        if (startDate || endDate) {
+          var today = new Date(); today.setHours(0,0,0,0);
+          if (startDate) {
+            var sd = new Date(startDate); sd.setHours(0,0,0,0);
+            if (today < sd) return makeJson({ ok: false, error: '녹음 기간이 아직 시작되지 않았습니다.\n시작일: ' + startDate });
+          }
+          if (endDate) {
+            var ed = new Date(endDate); ed.setHours(23,59,59,999);
+            if (today > ed) return makeJson({ ok: false, error: '녹음 기간이 종료됐습니다.\n종료일: ' + endDate });
+          }
+        }
+        return makeJson({ ok: true });
+      }
     }
     return makeJson({ ok: true, noPassword: true });
   }
@@ -134,8 +152,14 @@ function doGet(e) {
     }
   }
 
+  // ── 오디오 데이터 (b64) — audioBin은 audio의 별칭 (하위호환) ──
+  if (action === 'audioBin') {
+    e.parameter.action = 'audio';
+    // fall-through: 아래 audio 블록이 동일하게 처리
+  }
+
   // ── 오디오 데이터 (b64, ~3~10초) — 재생 + 다운로드 공용 ──
-  if (action === 'audio') {
+  if (action === 'audio' || action === 'audioBin') {
     try {
       var fid2  = e.parameter.f || '';
       var rows5 = getSheet().getDataRange().getValues();

@@ -140,7 +140,7 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
     <button class="play-btn" id="playBtn" disabled onclick="togglePlay()">▶</button>
     <div class="seek-wrap" id="seekWrap">
       <input class="seek-bar" id="seekBar" type="range" min="0" max="100" value="0" step="0.1">
-      <div class="seek-time"><span id="timeCurrent">0:00</span></div>
+      <div class="seek-time"><span id="timeCurrent">0:00</span> / <span id="timeTotal">0:00</span></div>
     </div>
     <div class="status" id="statusMsg"></div>
   </div>
@@ -414,6 +414,7 @@ const statusMsg  = document.getElementById('statusMsg');
 const seekWrap   = document.getElementById('seekWrap');
 const seekBar    = document.getElementById('seekBar');
 const timeCurrent= document.getElementById('timeCurrent');
+const timeTotal  = document.getElementById('timeTotal');
 const playerWrap = document.getElementById('playerWrap');
 const doneWrap   = document.getElementById('doneWrap');
 const doneTitle  = document.getElementById('doneTitle');
@@ -460,41 +461,40 @@ function applyInfo(school, name, cls, dl) {
 }
 
 /* ════════════════════════════════════════════
-   2단계 로딩 — 빠른 흐름 + 안전 폴백
-   Phase 1: audio   → 메타 + Drive URL (~1초)
-   Phase 2: 재생    → Drive URL을 audio src에 직접
-   Phase 3: 폴백    → 5초 내 canplay 안 오면 b64로 재시도
+   오디오 로딩 — action=audio 에서 b64 직접 수신 후 Blob URL 변환
+   (Drive 직접 스트림 불필요 — GAS가 b64로 반환)
 ════════════════════════════════════════════ */
-let driveUrlForFallback = '';
 
 async function loadAudio() {
+  audioReady = false;
   try {
-    /* ── Phase 1: 메타 + Drive URL ── */
     ovLoading.innerHTML = '<span class="ov-spin"></span>음성 정보 확인 중…';
 
-    const res = await fetchWithTimeout(
-      GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId), 20000
+    const res  = await fetchWithTimeout(
+      GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId), 30000
     );
     const data = await res.json();
-    console.log('[Phase1] response:', data);
     if (!data || !data.ok)
       throw new Error((data && data.error) || '파일 정보를 불러올 수 없습니다');
 
     applyInfo(data.school, data.name, data.className, data.downloadEnabled);
-    driveUrlForFallback = data.driveUrl;
 
-    /* ── Phase 2: Drive URL 직접 재생 시도 ── */
     ovLoading.innerHTML = '<span class="ov-spin"></span>음성 준비 중…';
-    player.src = data.driveUrl;
-    player.load();
 
-    /* ── Phase 3: 5초 안에 canplay 안 오면 b64 폴백 ── */
-    setTimeout(() => {
-      if (!audioReady) {
-        console.warn('[Phase3] Drive URL 재생 실패 — b64 폴백 시작');
-        loadAudioFallback();
-      }
-    }, 5000);
+    // b64 → Blob URL 변환
+    const mime   = data.mime || 'audio/webm';
+    const binary = atob(data.b64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    rawBlob   = new Blob([bytes], { type: mime });
+    audioMime = mime;
+
+    // 기존 ObjectURL 해제 후 새로 세팅
+    if (player.src && player.src.startsWith('blob:')) {
+      URL.revokeObjectURL(player.src);
+    }
+    player.src = URL.createObjectURL(rawBlob);
+    player.load();
 
   } catch(err) {
     console.error('[loadAudio]', err);
@@ -508,44 +508,6 @@ async function loadAudio() {
   }
 }
 
-/* ── b64 폴백 (Drive URL이 모바일 브라우저에서 안 될 때) ── */
-async function loadAudioFallback() {
-  try {
-    ovLoading.innerHTML = '<span class="ov-spin"></span>음성 다운로드 중…';
-    const res = await fetchWithTimeout(
-      GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId), 90000
-    );
-    const data = await res.json();
-    console.log('[Fallback] mime:', data && data.mime, 'b64 len:', (data && data.b64) ? data.b64.length : 0);
-    if (!data || !data.ok) throw new Error((data && data.error) || '오디오 로드 실패');
-
-    const mime   = data.mime || 'audio/webm';
-    const binary = atob(data.b64);
-    const bytes  = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    rawBlob    = new Blob([bytes], { type: mime });
-    player.src = URL.createObjectURL(rawBlob);
-    player.load();
-
-    /* 폴백 후에도 5초 내 안 되면 명확한 에러 */
-    setTimeout(() => {
-      if (!audioReady) {
-        ovLoading.style.display = 'none';
-        ovSchool.textContent    = '재생 준비 실패';
-        ovStudent.textContent   = '브라우저를 변경하거나 새로고침 후 다시 시도해 주세요';
-        document.getElementById('ovRetry').style.display = 'block';
-      }
-    }, 5000);
-
-  } catch(err) {
-    console.error('[Fallback]', err);
-    ovLoading.style.display = 'none';
-    ovSchool.textContent  = '불러오기 실패';
-    ovStudent.textContent = err.message || '잠시 후 다시 시도해 주세요';
-    document.getElementById('ovRetry').style.display = 'block';
-  }
-}
-
 function retryLoad() {
   document.getElementById('ovRetry').style.display = 'none';
   ovLoading.innerHTML     = '<span class="ov-spin"></span>불러오는 중…';
@@ -554,30 +516,33 @@ function retryLoad() {
   ovStudent.textContent   = '';
   ovHint.style.display    = 'none';
   ovSub.style.display     = 'none';
-  rawBlob = null;
+  rawBlob    = null;
+  audioReady = false;
   loadAudio();
 }
 
-/* ── canplay: 오디오 준비 완료 (Drive URL OR b64 어느 쪽이든) ── */
+/* ── canplay: 오디오 준비 완료 ── */
 player.addEventListener('canplay', () => {
-  console.log('[canplay] audio ready, src=', player.src.substring(0, 80));
+  if (audioReady) return; // 중복 호출 방지 (재시도 시에도 안전)
+  console.log('[canplay] audio ready');
   audioReady             = true;
   seekWrap.style.display = 'block';
   playBtn.disabled       = false;
-  /* 로딩 메시지 숨기고 터치 힌트 표시 */
   ovLoading.style.display = 'none';
   ovHint.style.display    = 'block';
   ovSub.style.display     = 'block';
   updateSeekColor(0);
   if (userTouched) beginPlay();
-}, { once: true });
+});
 
-/* ── audio error: Drive URL 실패 시 즉시 b64 폴백 ── */
+/* ── audio error: 로딩 실패 시 에러 표시 ── */
 player.addEventListener('error', (e) => {
-  console.error('[player error]', player.error, 'src=', player.src.substring(0, 80));
-  if (!audioReady && driveUrlForFallback && player.src.indexOf('drive.google.com') !== -1) {
-    console.warn('Drive URL 실패 → b64 폴백');
-    loadAudioFallback();
+  console.error('[player error]', player.error);
+  if (!audioReady) {
+    ovLoading.style.display = 'none';
+    ovSchool.textContent    = '재생 준비 실패';
+    ovStudent.textContent   = '새로고침 후 다시 시도해 주세요';
+    document.getElementById('ovRetry').style.display = 'block';
   }
 });
 
@@ -716,16 +681,9 @@ async function downloadMp3() {
   saveBtn.disabled = true;
   saveBtn.classList.add('converting');
   try {
-    /* rawBlob 없으면 audioBin으로 받아오기 */
+    /* rawBlob은 loadAudio()에서 이미 세팅됨 — 없으면 페이지 새로고침 필요 */
     if (!rawBlob) {
-      saveBtn.querySelector('.bt').textContent = '불러오는 중…';
-      const r = await fetch(GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId));
-      const d = await r.json();
-      if (!d || !d.ok) throw new Error((d && d.error) || '오디오 데이터 로드 실패');
-      const binary = atob(d.b64);
-      const bytes  = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      rawBlob = new Blob([bytes], { type: d.mime || 'audio/webm' });
+      throw new Error('음성 데이터가 없습니다.\n페이지를 새로고침 후 다시 시도해 주세요.');
     }
 
     let finalBlob, fileExt, fileMime;

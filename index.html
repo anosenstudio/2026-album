@@ -134,13 +134,17 @@
 
 <div class="divider"></div>
 
-<!-- ✏️ 여기서 학반별로 학생 카드를 추가하세요 -->
+<!-- ✏️ 여기서 학반별로 학생 카드를 추가하세요
+     href의 ?f= 값은 admin.html에서 생성한 QR URL의 fileId 파라미터 값입니다.
+     예) admin.html QR URL: https://...github.io/play.html?f=1a2B3c4D...
+         → href="play.html?f=1a2B3c4D..." 로 입력하세요 -->
 
 <div class="class-section">
   <div class="class-label">6학년 1반</div>
   <div class="student-grid">
 
-    <a class="student-card" href="play.html?student=홍길동&class=6학년 1반&file=홍길동">
+    <!-- ⬇️ admin.html에서 생성된 실제 fileId로 교체하세요 -->
+    <a class="student-card" href="play.html?f=여기에_fileId_입력">
       <div class="avatar">홍</div>
       <div>
         <div class="student-name">홍길동</div>
@@ -148,7 +152,7 @@
       </div>
     </a>
 
-    <a class="student-card" href="play.html?student=김영희&class=6학년 1반&file=김영희">
+    <a class="student-card" href="play.html?f=여기에_fileId_입력">
       <div class="avatar">김</div>
       <div>
         <div class="student-name">김영희</div>
@@ -156,7 +160,7 @@
       </div>
     </a>
 
-    <!-- 학생을 추가하려면 위 블록을 복사해서 이름과 번호만 바꾸세요 -->
+    <!-- 학생을 추가하려면 위 블록을 복사해서 fileId, 이름, 번호만 바꾸세요 -->
 
   </div>
 </div>
@@ -165,7 +169,7 @@
   <div class="class-label">6학년 2반</div>
   <div class="student-grid">
 
-    <a class="student-card" href="play.html?student=이민준&class=6학년 2반&file=이민준">
+    <a class="student-card" href="play.html?f=여기에_fileId_입력">
       <div class="avatar">이</div>
       <div>
         <div class="student-name">이민준</div>

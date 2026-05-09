@@ -394,7 +394,7 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     }
   }
 
-  /* ── 오디오 로드: Drive URL 우선(빠름) → audioBin 폴백 ── */
+  /* ── 오디오 로드: action=audio b64 수신 → Blob URL 변환 ── */
   let currentRaf = null;
 
   function startRAF(fileId, audio) {
@@ -420,50 +420,21 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     $('ml-' + fileId).style.display = 'block';
     $('pc-' + fileId).style.display = 'none';
     try {
-      /* Phase 1: Drive URL로 즉시 재생 시도 (~1초) */
+      // action=audio 에서 b64 직접 수신 → Blob URL 변환
       const res  = await fetch(GAS_URL + '?action=audio&f=' + encodeURIComponent(fileId));
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || '로드 실패');
 
-      const audio = new Audio();
-      audio.src = data.driveUrl;
-      const driveOk = await new Promise(resolve => {
-        const tid = setTimeout(() => resolve(false), 5000);
-        audio.addEventListener('canplay', () => { clearTimeout(tid); resolve(true); }, { once: true });
-        audio.addEventListener('error',   () => { clearTimeout(tid); resolve(false); }, { once: true });
-        audio.load();
-      });
-
-      if (driveOk) {
-        loadedAudios[fileId] = { audio };
-        wireAudio(fileId, audio);
-        return;
-      }
-
-      /* Phase 2 폴백: audioBin (b64) */
-      $('mst-' + fileId) && ($('mst-' + fileId).textContent = '재시도 중…');
-      await fetchAudioFallback(fileId);
-
-    } catch(err) {
-      $('ml-' + fileId).style.display = 'none';
-      $('pc-' + fileId).style.display = 'block';
-      $('mst-' + fileId).textContent  = '불러오기 실패: ' + err.message;
-    }
-  }
-
-  async function fetchAudioFallback(fileId) {
-    try {
-      const res  = await fetch(GAS_URL + '?action=audioBin&f=' + encodeURIComponent(fileId));
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || '로드 실패');
+      const mime   = data.mime || 'audio/webm';
       const binary = atob(data.b64);
       const bytes  = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const blob  = new Blob([bytes], { type: data.mime || 'audio/webm' });
+      const blob  = new Blob([bytes], { type: mime });
       const audio = new Audio();
       audio.src   = URL.createObjectURL(blob);
       loadedAudios[fileId] = { audio };
       wireAudio(fileId, audio);
+
     } catch(err) {
       $('ml-' + fileId).style.display = 'none';
       $('pc-' + fileId).style.display = 'block';
