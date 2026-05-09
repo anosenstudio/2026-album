@@ -89,8 +89,8 @@ function doGet(e) {
         var pwOk = String(pwRows[k][1]).trim() === pw.trim();
         if (!pwOk) return makeJson({ ok: false });
         // 기간 검증
-        var startDate = pwRows[k][3] ? String(pwRows[k][3]).trim() : '';
-        var endDate   = pwRows[k][4] ? String(pwRows[k][4]).trim() : '';
+        var startDate = pwRows[k][3] ? fmtDate(pwRows[k][3]) : '';
+        var endDate   = pwRows[k][4] ? fmtDate(pwRows[k][4]) : '';
         if (startDate || endDate) {
           var today = new Date(); today.setHours(0,0,0,0);
           if (startDate) {
@@ -202,8 +202,8 @@ function doGet(e) {
         school:          String(pwAll[p][0]).trim(),
         password:        String(pwAll[p][1]).trim(),
         downloadEnabled: !(dv2 === false || String(dv2).toLowerCase() === 'false'),
-        startDate:       pwAll[p][3] ? String(pwAll[p][3]).trim() : '',
-        endDate:         pwAll[p][4] ? String(pwAll[p][4]).trim() : ''
+        startDate:       pwAll[p][3] ? fmtDate(pwAll[p][3]) : '',
+        endDate:         pwAll[p][4] ? fmtDate(pwAll[p][4]) : ''
       });
     }
     return makeJson({ passwords: list });
@@ -325,4 +325,15 @@ function makeJson(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 날짜값(Date 객체 또는 문자열)을 "YYYY-MM-DD" 형식으로 반환
+function fmtDate(val) {
+  if (!val) return '';
+  var d = (val instanceof Date) ? val : new Date(val);
+  if (isNaN(d)) return String(val).substring(0, 10);
+  var y  = d.getFullYear();
+  var m  = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
 }
