@@ -97,9 +97,31 @@ select{cursor:pointer;appearance:none;-webkit-appearance:none}
 .pp-save:disabled{opacity:.4;cursor:not-allowed}
 .pp-clear{padding:8px 12px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:12px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
 .pp-clear:hover{background:#E9EAEC}
+/* 인라인 비밀번호 변경 패널 */
+.pwch-panel{display:none;margin-top:.75rem;padding:.875rem;background:var(--card);border-radius:10px;border:1.5px solid #F8DBBE;animation:fadeIn .2s ease both}
+.pwch-panel.open{display:block}
+.pwch-panel .pwch-title{font-size:12px;font-weight:600;color:#E07C2A;margin-bottom:.625rem}
+.pwch-panel .pwch-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pwch-panel .pwch-row input{flex:1;padding:9px 12px;font-size:13px}
+.pwch-panel .pwch-btns{display:flex;gap:6px;margin-top:.625rem}
+.pwch-save{padding:8px 16px;border-radius:8px;border:none;background:#E07C2A;color:#fff;font-size:12px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:background .15s}
+.pwch-save:hover:not(:disabled){background:#C96F1E}
+.pwch-save:disabled{opacity:.4;cursor:not-allowed}
+.pwch-cancel{padding:8px 12px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:12px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
+.pwch-cancel:hover{background:#E9EAEC}
+.pwch-err{font-size:12px;color:var(--red);margin-top:.5rem;min-height:16px}
 .pw-del{padding:7px 11px;border-radius:8px;border:none;background:var(--input-bg);color:var(--muted);font-size:11.5px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;transition:background .15s}
 .pw-del:hover{background:#E9EAEC}
 .pw-del:disabled{opacity:.5;cursor:not-allowed}
+/* 검색 박스 */
+.pw-search-wrap{position:relative;margin-bottom:1rem}
+.pw-search-wrap input{padding-left:36px;background:var(--input-bg)}
+.pw-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none}
+.pw-search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px;display:none}
+.pw-search-clear:hover{color:var(--text)}
+.pw-count{font-size:12px;color:var(--muted);margin-bottom:.75rem}
+.pw-count strong{color:var(--primary)}
+
 .pw-empty{text-align:center;padding:2rem;color:var(--muted);font-size:14px}
 
 /* QR 그리드 */
@@ -195,6 +217,14 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
         <strong style="color:var(--red)">⬇ 다운 OFF</strong> = 저장 버튼 숨김<br>
         <strong>📋 복사</strong> 버튼으로 학부모·학생에게 링크 공유
       </p>
+      <div class="pw-search-wrap">
+        <span class="pw-search-icon">🔍</span>
+        <input id="pwSearchInput" type="text" placeholder="학교 이름으로 검색…"
+          oninput="filterPasswords(this.value)"
+          autocomplete="off" />
+        <button class="pw-search-clear" id="pwSearchClear" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="pw-count" id="pwCount" style="display:none"></div>
       <div class="pw-list" id="pwList"><div class="pw-empty">불러오는 중…</div></div>
       <div class="btn-row" style="margin-top:1rem">
         <button class="btn btn-ghost" onclick="loadPasswords()">새로고침</button>
@@ -368,62 +398,119 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
   }
 
   /* ── 비밀번호 관리 ── */
+  let allPasswords = [];
+
   async function loadPasswords() {
     try {
       const res  = await fetch(getGasUrl() + '?action=getPasswords');
       const data = await res.json();
-      const list = document.getElementById('pwList');
-      if (!data.passwords?.length) {
-        list.innerHTML = '<div class="pw-empty">설정된 학교가 없습니다</div>'; return;
-      }
-      list.innerHTML = data.passwords.map(p => {
-        const dlOn  = p.downloadEnabled !== false;
-        const encSc = encodeURIComponent(p.school);
-        const safeSc = p.school.replace(/'/g,"\\'");
-        const badge  = getPeriodBadge(p.startDate, p.endDate);
-        const dateStr = (p.startDate || p.endDate)
-          ? `<span>${fmtDate(p.startDate)}~${fmtDate(p.endDate)}</span> ${badge}`
-          : '<span style="color:var(--faint)">기간 없음 (항상 허용)</span>';
-        return `
-        <div class="pw-row" id="pwrow-${encSc}">
-          <div class="pw-row-top">
-            <span class="pw-school">🏫 ${p.school}</span>
-            <span class="pw-value">🔒 ${p.password}</span>
-          </div>
-          <div class="pw-dates" id="pddates-${encSc}">${dateStr}</div>
-          <div class="pw-actions">
-            <button class="dl-toggle ${dlOn?'on':'off'}" id="dltog-${encSc}"
-              onclick="toggleDownload('${safeSc}',${dlOn})" title="${dlOn?'클릭시 다운로드 차단':'클릭시 다운로드 허용'}">
-              ⬇ 다운 ${dlOn?'ON':'OFF'}
-            </button>
-            <button class="period-btn" onclick="togglePeriodPanel('${encSc}')">
-              📅 기간 설정
-            </button>
-            <button class="copy-btn" id="copybtn-${encSc}"
-              onclick="copyShareMsg('${safeSc}','${encSc}')">
-              📋 복사
-            </button>
-            <button class="pw-del" onclick="deletePassword('${safeSc}')">삭제</button>
-          </div>
-          <div class="period-panel" id="pp-${encSc}">
-            <div class="pp-title">📅 녹음 기간 수정</div>
-            <div class="pp-row">
-              <input type="date" id="ppstart-${encSc}" value="${p.startDate||''}" />
-              <span class="pp-sep">~</span>
-              <input type="date" id="ppend-${encSc}"   value="${p.endDate||''}" />
-            </div>
-            <div class="pp-btns">
-              <button class="pp-save" id="ppsave-${encSc}"
-                onclick="savePeriodInline('${safeSc}','${encSc}')">저장</button>
-              <button class="pp-clear"
-                onclick="clearPeriodInline('${encSc}')">기간 삭제</button>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
+      allPasswords = data.passwords || [];
+      const q = document.getElementById('pwSearchInput')?.value || '';
+      renderPasswords(q);
     } catch {
       document.getElementById('pwList').innerHTML = '<div class="pw-empty">불러오기 실패</div>';
     }
+  }
+
+  function filterPasswords(q) {
+    const clearBtn = document.getElementById('pwSearchClear');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+    renderPasswords(q);
+  }
+
+  function clearSearch() {
+    const input = document.getElementById('pwSearchInput');
+    if (input) { input.value = ''; input.focus(); }
+    document.getElementById('pwSearchClear').style.display = 'none';
+    renderPasswords('');
+  }
+
+  function renderPasswords(q) {
+    const list    = document.getElementById('pwList');
+    const countEl = document.getElementById('pwCount');
+    const keyword = (q || '').trim().toLowerCase();
+    const filtered = keyword
+      ? allPasswords.filter(p => p.school.toLowerCase().includes(keyword))
+      : allPasswords;
+
+    if (keyword) {
+      countEl.style.display = 'block';
+      countEl.innerHTML = allPasswords.length + '개 중 <strong>' + filtered.length + '개</strong> 검색됨';
+    } else {
+      countEl.style.display = allPasswords.length > 0 ? 'block' : 'none';
+      countEl.innerHTML = '총 <strong>' + allPasswords.length + '개</strong> 학교';
+    }
+
+    if (!allPasswords.length) {
+      list.innerHTML = '<div class="pw-empty">설정된 학교가 없습니다</div>'; return;
+    }
+    if (!filtered.length) {
+      list.innerHTML = '<div class="pw-empty">검색 결과가 없습니다</div>'; return;
+    }
+
+    list.innerHTML = filtered.map(p => {
+      const dlOn   = p.downloadEnabled !== false;
+      const encSc  = encodeURIComponent(p.school);
+      const safeSc = p.school.replace(/'/g,"\\'");
+      const badge  = getPeriodBadge(p.startDate, p.endDate);
+      const dateStr = (p.startDate || p.endDate)
+        ? `<span>${fmtDate(p.startDate)}~${fmtDate(p.endDate)}</span> ${badge}`
+        : '<span style="color:var(--faint)">기간 없음 (항상 허용)</span>';
+      return `
+      <div class="pw-row" id="pwrow-${encSc}">
+        <div class="pw-row-top">
+          <span class="pw-school">🏫 ${p.school}</span>
+          <span class="pw-value" id="pwval-${encSc}">🔒 ${p.password}</span>
+        </div>
+        <div class="pw-dates" id="pddates-${encSc}">${dateStr}</div>
+        <div class="pw-actions">
+          <button class="dl-toggle ${dlOn?'on':'off'}" id="dltog-${encSc}"
+            onclick="toggleDownload('${safeSc}',${dlOn})" title="${dlOn?'클릭시 다운로드 차단':'클릭시 다운로드 허용'}">
+            ⬇ 다운 ${dlOn?'ON':'OFF'}
+          </button>
+          <button class="period-btn" onclick="togglePeriodPanel('${encSc}')">
+            📅 기간 설정
+          </button>
+          <button class="period-btn" style="background:#FFF7ED;color:#E07C2A;border:1px solid #F8DBBE" onclick="togglePwChangePanel('${encSc}')">
+            🔑 비밀번호 변경
+          </button>
+          <button class="copy-btn" id="copybtn-${encSc}"
+            onclick="copyShareMsg('${safeSc}','${encSc}')">
+            📋 복사
+          </button>
+          <button class="pw-del" onclick="deletePassword('${safeSc}')">삭제</button>
+        </div>
+        <div class="period-panel" id="pp-${encSc}">
+          <div class="pp-title">📅 녹음 기간 수정</div>
+          <div class="pp-row">
+            <input type="date" id="ppstart-${encSc}" value="${p.startDate||''}" />
+            <span class="pp-sep">~</span>
+            <input type="date" id="ppend-${encSc}" value="${p.endDate||''}" />
+          </div>
+          <div class="pp-btns">
+            <button class="pp-save" id="ppsave-${encSc}"
+              onclick="savePeriodInline('${safeSc}','${encSc}')">저장</button>
+            <button class="pp-clear"
+              onclick="clearPeriodInline('${encSc}')">기간 삭제</button>
+          </div>
+        </div>
+        <div class="pwch-panel" id="pwch-${encSc}">
+          <div class="pwch-title">🔑 비밀번호 변경</div>
+          <div class="pwch-row">
+            <input type="text" id="pwchinput-${encSc}" placeholder="새 비밀번호 입력"
+              autocomplete="off"
+              onkeydown="if(event.key==='Enter')savePwChange('${safeSc}','${encSc}')" />
+          </div>
+          <div class="pwch-btns">
+            <button class="pwch-save" id="pwchsave-${encSc}"
+              onclick="savePwChange('${safeSc}','${encSc}')">변경</button>
+            <button class="pwch-cancel"
+              onclick="togglePwChangePanel('${encSc}')">취소</button>
+          </div>
+          <div class="pwch-err" id="pwcherr-${encSc}"></div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // "Thu May 07 2026..." 같은 긴 날짜 문자열을 "2026-05-07" 형식으로 변환
@@ -515,26 +602,12 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
 
   /* ── 링크 공유 ── */
   function buildShareMsg(school) {
-    const base = document.getElementById('pwList');
-    // passwords 목록에서 해당 학교 데이터 가져오기
-    const rows = document.querySelectorAll('[id^="pwrow-"]');
-    let pw='', startDate='', endDate='';
-    rows.forEach(r => {
-      if (r.querySelector('.pw-school').textContent.includes(school)) {
-        pw        = r.querySelector('.pw-value').textContent.replace('🔒 ','').trim();
-        const dt  = r.querySelector('.pw-dates');
-        if (dt) {
-          const m = dt.textContent.match(/(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})/);
-          if (m) { startDate=m[1]; endDate=m[2]; }
-        }
-      }
-    });
-    const recordUrl = getPagesUrl() + '/record.html?school=' + school;
+    const p = allPasswords.find(x => x.school === school) || {};
+    const recordUrl = getPagesUrl() + '/record.html?school=' + encodeURIComponent(school);
     let msg = `🎓 ${school} 졸업 음성 메시지 녹음 안내\n\n`;
     msg += `📎 녹음 링크\n${recordUrl}\n`;
-    if (pw) msg += `\n🔒 비밀번호: ${pw}`;
-    if (startDate || endDate) msg += `\n\n📅 녹음 기간\n${startDate||'?'} ~ ${endDate||'?'}`;
-    
+    if (p.password) msg += `\n🔒 비밀번호: ${p.password}`;
+    if (p.startDate || p.endDate) msg += `\n\n📅 녹음 기간\n${p.startDate||'?'} ~ ${p.endDate||'?'}`;
     return msg;
   }
 
@@ -558,6 +631,8 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
   function togglePeriodPanel(encSc) {
     const panel = document.getElementById('pp-' + encSc);
     if (!panel) return;
+    // 비밀번호 변경 패널과 동시에 열리지 않도록
+    document.getElementById('pwch-' + encSc)?.classList.remove('open');
     panel.classList.toggle('open');
   }
 
@@ -590,6 +665,60 @@ footer{margin-top:3rem;text-align:center;font-size:12px;color:var(--faint);lette
     const e = document.getElementById('ppend-'   + encSc);
     if (s) s.value = '';
     if (e) e.value = '';
+  }
+
+  /* ── 인라인 비밀번호 변경 ── */
+  function togglePwChangePanel(encSc) {
+    const panel = document.getElementById('pwch-' + encSc);
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
+    // 기간 패널과 동시에 열리지 않도록
+    document.getElementById('pp-' + encSc)?.classList.remove('open');
+    panel.classList.toggle('open', !isOpen);
+    if (!isOpen) {
+      const input = document.getElementById('pwchinput-' + encSc);
+      if (input) { input.value = ''; input.focus(); }
+      const err = document.getElementById('pwcherr-' + encSc);
+      if (err) err.textContent = '';
+    }
+  }
+
+  async function savePwChange(school, encSc) {
+    const input = document.getElementById('pwchinput-' + encSc);
+    const newPw = (input?.value || '').trim();
+    const errEl = document.getElementById('pwcherr-' + encSc);
+    const btn   = document.getElementById('pwchsave-' + encSc);
+    if (!newPw) { if (errEl) errEl.textContent = '새 비밀번호를 입력해 주세요.'; return; }
+    if (btn) btn.disabled = true;
+    if (errEl) errEl.textContent = '';
+    try {
+      // 기존 기간 값 유지
+      const row   = document.getElementById('pwrow-' + encSc);
+      const start = row?.querySelector('[id^="ppstart-"]')?.value || '';
+      const end   = row?.querySelector('[id^="ppend-"]')?.value   || '';
+      const res  = await fetch(getGasUrl(), {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'setPassword', school, password:newPw, startDate:start, endDate:end }),
+        redirect:'follow'
+      });
+      const data = await res.json();
+      if (data.success) {
+        // 화면 즉시 업데이트 (새로고침 없이)
+        const valEl = document.getElementById('pwval-' + encSc);
+        if (valEl) valEl.textContent = '🔒 ' + newPw;
+        // allPasswords 캐시도 업데이트
+        const cached = allPasswords.find(p => p.school === school);
+        if (cached) cached.password = newPw;
+        document.getElementById('pwch-' + encSc)?.classList.remove('open');
+        showMsg('pwDelOk', '✓ ' + school + ' 비밀번호가 변경됐습니다.');
+      } else {
+        if (errEl) errEl.textContent = '변경 실패: ' + (data.error || '');
+        if (btn) btn.disabled = false;
+      }
+    } catch(err) {
+      if (errEl) errEl.textContent = '오류: ' + err.message;
+      if (btn) btn.disabled = false;
+    }
   }
 
   function showMsg(id, msg) {
