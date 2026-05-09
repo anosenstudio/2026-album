@@ -95,11 +95,11 @@ function doGet(e) {
           var today = new Date(); today.setHours(0,0,0,0);
           if (startDate) {
             var sd = new Date(startDate); sd.setHours(0,0,0,0);
-            if (today < sd) return makeJson({ ok: false, error: '녹음 기간이 아직 시작되지 않았습니다.\n시작일: ' + startDate });
+            if (today < sd) return makeJson({ ok: false, error: '녹음 기간이 아직 시작되지 않았습니다.\n시작일 : ' + startDate });
           }
           if (endDate) {
             var ed = new Date(endDate); ed.setHours(23,59,59,999);
-            if (today > ed) return makeJson({ ok: false, error: '녹음 기간이 종료됐습니다.\n종료일: ' + endDate });
+            if (today > ed) return makeJson({ ok: false, error: '녹음 기간이 종료됐습니다.\n종료일 : ' + endDate });
           }
         }
         return makeJson({ ok: true });
