@@ -706,10 +706,9 @@ const isAndroid = /Android/i.test(navigator.userAgent);
 let preparedFile = null; // { blob, filename, mime, savedAsRaw, bgmFailed }
 
 async function downloadMp3() {
-  // ───── 두 번째 클릭: 이미 변환 완료 → 즉시 다운로드 (제스처 fresh) ─────
+  // ───── 두 번째 클릭: 100% 동기 처리로 사용자 제스처 보존 ─────
   if (preparedFile) {
-    await triggerDownload(preparedFile.blob, preparedFile.filename, preparedFile.mime);
-    // 한 번 더 받고 싶을 수도 있으니 그대로 유지 (재클릭 시 또 받음)
+    triggerDownloadSync(preparedFile.blob, preparedFile.filename, preparedFile.mime);
     return;
   }
 
@@ -780,8 +779,8 @@ async function downloadMp3() {
     /* iOS/PC는 첫 클릭의 제스처가 아직 살아있어서 바로 다운로드 가능
        Android는 5초+ 걸린 경우 제스처 만료됐을 수 있어서 사용자가 한 번 더 클릭하게 안내 */
     if (!isAndroid) {
-      // 즉시 다운로드 시도 (iOS·PC는 거의 항상 성공)
-      await triggerDownload(finalBlob, filename, fileMime);
+      // 즉시 다운로드 시도 (iOS·PC는 거의 항상 성공) — 동기 호출
+      triggerDownloadSync(finalBlob, filename, fileMime);
     }
 
     // 버튼을 "다시 받기" 모드로 변경 — 안드로이드 첫 클릭 차단됐을 시 재시도용
@@ -808,23 +807,38 @@ async function downloadMp3() {
   }
 }
 
-/* 실제 다운로드 트리거 (두 번째 클릭 = 새 제스처에서 호출) */
-async function triggerDownload(blob, filename, mime) {
-  // 모바일: Web Share API (카카오톡·문자 공유)
-  if (navigator.share) {
+/* 실제 다운로드 트리거 — 100% 동기 함수로 사용자 제스처 보존
+   navigator.share와 anchor.click 모두 동기적으로 호출됨 (await 사용 X)
+   share Promise는 fire-and-forget (제스처는 share() 호출 시점에 share sheet로 전달됨) */
+function triggerDownloadSync(blob, filename, mime) {
+  // 안드로이드는 anchor 다운로드를 우선 시도 (Web Share share sheet 띄우면 추가 클릭 필요해 번거로움)
+  // iOS는 Web Share가 표준 흐름이라 share 우선
+  if (!isAndroid && navigator.share) {
     try {
       const file = new File([blob], filename, { type: mime });
-      if (navigator.canShare && navigator.canShare({ files:[file] })) {
-        await navigator.share({ files:[file], title: filename });
-        return; // 공유 성공
+      if (!navigator.canShare || navigator.canShare({ files:[file] })) {
+        // fire-and-forget: 제스처는 share() 호출 즉시 share sheet에 전달됨
+        navigator.share({ files:[file], title: filename }).catch(function(e) {
+          console.warn('[share canceled/failed]', e && e.message);
+          anchorDownload(blob, filename); // share 실패 시 anchor fallback
+        });
+        return;
       }
-    } catch(e) { /* 공유 취소 → anchor 다운로드 시도 */ }
+    } catch(e) { /* fall through to anchor */ }
   }
-  // PC / 공유 미지원: anchor 직접 다운로드
+  anchorDownload(blob, filename);
+}
+
+function anchorDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a   = document.createElement('a');
-  a.href = url; a.download = filename; a.style.display = 'none';
-  document.body.appendChild(a); a.click();
+  a.href = url;
+  a.download = filename;
+  a.target = '_blank'; // 일부 안드로이드 브라우저가 download 속성을 무시할 때 새 탭으로 열어 다운로드 가능
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
   document.body.removeChild(a);
   setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
 }
