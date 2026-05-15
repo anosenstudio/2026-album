@@ -113,7 +113,6 @@ footer{margin-top:2.5rem;text-align:center;font-size:12px;color:var(--faint);let
       <div class="r-icon">🎓</div>
     </div>
     <div class="ov-hint"    id="ovHint">화면을 터치하면 시작합니다</div>
-    <div class="ov-sub"     id="ovSub">잔잔한 연주곡과 함께 목소리가 재생됩니다</div>
     <div class="ov-loading" id="ovLoading"><span class="ov-spin"></span>음성을 불러오는 중…</div>
     <button id="ovRetry" style="display:none;margin-top:1rem;padding:10px 24px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:13px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer" onclick="retryLoad()">🔄 다시 시도</button>
   </div>
@@ -403,7 +402,6 @@ const overlay    = document.getElementById('overlay');
 const ovSchool   = document.getElementById('ovSchool');
 const ovStudent  = document.getElementById('ovStudent');
 const ovHint     = document.getElementById('ovHint');
-const ovSub      = document.getElementById('ovSub');
 const ovLoading  = document.getElementById('ovLoading');
 const schoolName = document.getElementById('schoolName');
 const studentInfo= document.getElementById('studentInfo');
@@ -515,7 +513,6 @@ function retryLoad() {
   ovSchool.textContent    = '';
   ovStudent.textContent   = '';
   ovHint.style.display    = 'none';
-  ovSub.style.display     = 'none';
   rawBlob    = null;
   audioReady = false;
   loadAudio();
@@ -530,7 +527,6 @@ player.addEventListener('canplay', () => {
   playBtn.disabled       = false;
   ovLoading.style.display = 'none';
   ovHint.style.display    = 'block';
-  ovSub.style.display     = 'block';
   updateSeekColor(0);
   if (userTouched) beginPlay();
 });
@@ -752,7 +748,7 @@ async function downloadMp3() {
       }, 300);
     } else if (bgmFailed) {
       setTimeout(function() {
-        alert('저장이 완료되었습니다.');
+        alert('저장이 완료되었습니다.\nBGM은 합성되지 않아 음성만 저장됐어요.');
       }, 300);
     }
   } catch(err) {
